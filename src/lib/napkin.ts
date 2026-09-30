@@ -1,13 +1,16 @@
-export const BASE_PRICE = 69;
+export const BASE_PRICE = 49;
 export const MAX_CHARS = 1800;
+export const ENVELOPE_COLOR_PRICE = 6;
+export const SEAL_PRICE = 9;
 
-export type ColorOption = { id: string; label: string; hex: string };
+export type ColorOption = { id: string; label: string; hex: string; price?: number };
 
 export const ENVELOPE_COLORS: ColorOption[] = [
-  { id: "vinho", label: "Vinho", hex: "#6B1E2E" },
-  { id: "rose", label: "Rosé", hex: "#E3B7B4" },
-  { id: "creme", label: "Creme", hex: "#EFE3D0" },
-  { id: "oliva", label: "Oliva", hex: "#7A8450" },
+  { id: "branco", label: "Branco", hex: "#FFFFFF" },
+  { id: "vinho", label: "Vinho", hex: "#6B1E2E", price: ENVELOPE_COLOR_PRICE },
+  { id: "rose", label: "Rosé", hex: "#E3B7B4", price: ENVELOPE_COLOR_PRICE },
+  { id: "creme", label: "Creme", hex: "#EFE3D0", price: ENVELOPE_COLOR_PRICE },
+  { id: "oliva", label: "Oliva", hex: "#7A8450", price: ENVELOPE_COLOR_PRICE },
 ];
 
 export const SEAL_COLORS: ColorOption[] = [
@@ -24,13 +27,7 @@ export const EXTRAS: Extra[] = [
     id: "raminho",
     label: "Raminho seco no lacre",
     description: "capim-dos-pampas preso na cera",
-    price: 8,
-  },
-  {
-    id: "perfume",
-    label: "Carta perfumada",
-    description: "uma borrifada leve no papel",
-    price: 10,
+    price: 5,
   },
   {
     id: "rastreio",

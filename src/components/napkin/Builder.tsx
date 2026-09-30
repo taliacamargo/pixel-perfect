@@ -8,9 +8,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   BASE_PRICE,
   ENVELOPE_COLORS,
+  ENVELOPE_COLOR_PRICE,
   EXTRAS,
   MAX_CHARS,
   SEAL_COLORS,
+  SEAL_PRICE,
   TEMPLATES,
   formatBRL,
   type ColorOption,
@@ -55,7 +57,7 @@ function Swatches({
 
 export function Builder() {
   const [text, setText] = useState("");
-  const [envelope, setEnvelope] = useState("vinho");
+  const [envelope, setEnvelope] = useState("branco");
   const [seal, setSeal] = useState("perola");
   const [extras, setExtras] = useState<string[]>([]);
   const [anonymous, setAnonymous] = useState(false);
@@ -76,7 +78,10 @@ export function Builder() {
   const envelopeColor = ENVELOPE_COLORS.find((c) => c.id === envelope)!;
   const sealColor = SEAL_COLORS.find((c) => c.id === seal)!;
   const chosenExtras = EXTRAS.filter((extra) => extras.includes(extra.id));
-  const total = BASE_PRICE + chosenExtras.reduce((sum, extra) => sum + extra.price, 0);
+  const total =
+    BASE_PRICE +
+    (envelopeColor.price ?? 0) +
+    chosenExtras.reduce((sum, extra) => sum + extra.price, 0);
   const atLimit = text.length >= MAX_CHARS;
 
   const canSubmit = useMemo(
@@ -181,9 +186,17 @@ export function Builder() {
                   value={envelope}
                   onChange={setEnvelope}
                 />
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Branco incluso. Envelopes coloridos: + {formatBRL(ENVELOPE_COLOR_PRICE)}.
+                </p>
               </div>
               <div>
-                <Label className="mb-3 block">Cor do lacre</Label>
+                <Label className="mb-3 flex items-center gap-2">
+                  Cor do lacre
+                  <span className="rounded-full bg-[var(--blush)] px-2.5 py-0.5 text-xs font-medium text-[var(--wine-deep)] dark:bg-[var(--wine)]/40 dark:text-foreground">
+                    de presente
+                  </span>
+                </Label>
                 <Swatches name="Lacre" options={SEAL_COLORS} value={seal} onChange={setSeal} />
               </div>
             </div>
@@ -379,6 +392,23 @@ export function Builder() {
                   <dt className="text-muted-foreground">Carta escrita à mão + envio</dt>
                   <dd className="font-light">{formatBRL(BASE_PRICE)}</dd>
                 </div>
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">Lacre de cera com sinete</dt>
+                  <dd className="font-light">
+                    <span className="mr-1.5 text-muted-foreground line-through">
+                      {formatBRL(SEAL_PRICE)}
+                    </span>
+                    <span className="font-medium text-[var(--wine-deep)] dark:text-foreground">
+                      Grátis
+                    </span>
+                  </dd>
+                </div>
+                {envelopeColor.id !== "branco" && (
+                  <div className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">Envelope colorido</dt>
+                    <dd className="font-light">{formatBRL(envelopeColor.price ?? 0)}</dd>
+                  </div>
+                )}
                 {chosenExtras.map((extra) => (
                   <div key={extra.id} className="flex justify-between gap-4">
                     <dt className="text-muted-foreground">{extra.label}</dt>
