@@ -19,6 +19,12 @@ O build usa Nitro com destino Vercel e gera `.vercel/output`, com os arquivos es
 
 Para publicar, envie as alterações ao repositório conectado à Vercel e execute um novo deploy. A raiz do projeto na Vercel deve ser a pasta que contém `package.json` e `vercel.json`. O build local não publica o site.
 
+## Pagamentos
+
+- O botão "Ir para o pagamento" chama `POST /api/checkout` (`src/routes/api/checkout.ts`), que valida o pedido, recalcula o preço com a tabela de `src/lib/napkin.ts` e abre o Stripe Checkout em BRL. O pedido fica nos metadados da sessão da Stripe; não há banco de dados.
+- Painel em `/painel` (`src/routes/painel/`, `src/lib/painel.functions.ts`): login com `ADMIN_PASSWORD`, lista os pedidos pagos direto da Stripe (Pix confirmado depois aparece sozinho) e guarda status e rastreio nos metadados do PaymentIntent. O aviso de postagem vai pelo WhatsApp, com mensagem pronta.
+- Variáveis: veja `.env.example`. Localmente ficam em `.env.local` (fora do git); na Vercel, em Settings > Environment Variables.
+
 ## Identidade e SEO
 
 - Metadados: `src/lib/site.ts` e `src/routes/index.tsx`.
