@@ -1,4 +1,5 @@
 import { Link, Outlet, createFileRoute, useRouter } from "@tanstack/react-router";
+import { Eye, EyeOff } from "lucide-react";
 import { useState, type FormEvent } from "react";
 
 import { Input } from "@/components/ui/input";
@@ -48,6 +49,7 @@ function PainelLayout() {
 function LoginForm() {
   const router = useRouter();
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
 
@@ -76,15 +78,27 @@ function LoginForm() {
       <h1 className="text-2xl text-[var(--wine-deep)] dark:text-foreground">Área restrita</h1>
       <div>
         <Label htmlFor="senha">Senha</Label>
-        <Input
-          id="senha"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="mt-2 rounded-xl"
-          autoFocus
-        />
+        <div className="relative mt-2">
+          <Input
+            id="senha"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="rounded-xl pr-11"
+            autoFocus
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((show) => !show)}
+            aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+            aria-pressed={showPassword}
+            aria-controls="senha"
+            className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-xl text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none"
+          >
+            {showPassword ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+          </button>
+        </div>
       </div>
       {error && (
         <p role="alert" className="text-sm text-destructive">

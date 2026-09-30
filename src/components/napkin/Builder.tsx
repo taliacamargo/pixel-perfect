@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react";
+import { CircleAlert, CircleCheck, LoaderCircle, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { EnvelopePreview } from "@/components/napkin/EnvelopePreview";
 
@@ -18,7 +19,7 @@ import {
   formatBRL,
   type ColorOption,
 } from "@/lib/napkin";
-import { orderItems } from "@/lib/order";
+import { buyerSchema, formatWhatsapp, orderItems } from "@/lib/order";
 
 function Swatches({
   options,
@@ -57,6 +58,50 @@ function Swatches({
   );
 }
 
+type BuyerField = "buyerName" | "email" | "whatsapp";
+
+type CepStatus = {
+  kind: "idle" | "loading" | "found" | "partial" | "error";
+  message: string;
+};
+
+const CEP_IDLE: CepStatus = { kind: "idle", message: "Digite o CEP para buscar o endereço." };
+
+function CepStatusIcon({ kind }: { kind: CepStatus["kind"] }) {
+  const className = "mt-0.5 size-3.5 shrink-0";
+  if (kind === "loading") return <LoaderCircle className={`${className} animate-spin`} />;
+  if (kind === "found") return <CircleCheck className={`${className} text-[var(--wine)]`} />;
+  if (kind === "partial" || kind === "error")
+    return <CircleAlert className={`${className} ${kind === "error" ? "text-destructive" : ""}`} />;
+  return <MapPin className={className} />;
+}
+
+function BuyerInput({
+  id,
+  label,
+  error,
+  ...props
+}: { id: string; label: string; error: string | undefined } & ComponentProps<typeof Input>) {
+  return (
+    <div>
+      <Label htmlFor={id}>{label}</Label>
+      <Input
+        id={id}
+        required
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? `${id}-erro` : undefined}
+        className={`mt-2 rounded-xl ${error ? "border-destructive focus-visible:ring-destructive" : ""}`}
+        {...props}
+      />
+      {error && (
+        <p id={`${id}-erro`} className="mt-1.5 text-xs leading-relaxed text-destructive">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function Builder() {
   const [text, setText] = useState("");
   const [envelope, setEnvelope] = useState("branco");
@@ -66,11 +111,24 @@ export function Builder() {
 
   const [recipient, setRecipient] = useState("");
   const [cep, setCep] = useState("");
-  const [cepStatus, setCepStatus] = useState("Digite o CEP para buscar o endereço.");
-  const [cepLoading, setCepLoading] = useState(false);
+  const [cepStatus, setCepStatus] = useState<CepStatus>(CEP_IDLE);
+  const cepLoading = cepStatus.kind === "loading";
   const cepRequest = useRef<AbortController | null>(null);
   const currentCep = useRef("");
   const editedAddressFields = useRef(new Set<string>());
+  // Campos preenchidos pelo CEP ganham um fundo suave até a pessoa editar.
+  const [autofilled, setAutofilled] = useState<ReadonlySet<string>>(new Set());
+  const markEdited = (field: string) => {
+    editedAddressFields.current.add(field);
+    setAutofilled((prev) => {
+      if (!prev.has(field)) return prev;
+      const next = new Set(prev);
+      next.delete(field);
+      return next;
+    });
+  };
+  const fieldClass = (field: string) =>
+    `mt-2 rounded-xl transition-colors ${autofilled.has(field) ? "border-[var(--wine)]/30 bg-[var(--blush)]/50 dark:bg-[var(--wine)]/15" : ""}`;
   useEffect(() => () => cepRequest.current?.abort(), []);
   const [street, setStreet] = useState("");
   const [number, setNumber] = useState("");
@@ -83,6 +141,16 @@ export function Builder() {
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  // Os erros de "Seus dados" vêm do mesmo schema Zod que o servidor usa,
+  // e só aparecem depois que a pessoa sai do campo.
+  const [touched, setTouched] = useState<ReadonlySet<BuyerField>>(new Set());
+  const touch = (field: BuyerField) =>
+    setTouched((prev) => (prev.has(field) ? prev : new Set(prev).add(field)));
+  const buyerResult = buyerSchema.safeParse({ buyerName, email, whatsapp });
+  const buyerErrors = buyerResult.success ? {} : buyerResult.error.flatten().fieldErrors;
+  const errorFor = (field: BuyerField) =>
+    touched.has(field) ? buyerErrors[field]?.[0] : undefined;
 
   const envelopeColor = ENVELOPE_COLORS.find((c) => c.id === envelope)!;
   const sealColor = SEAL_COLORS.find((c) => c.id === seal)!;
@@ -99,10 +167,8 @@ export function Builder() {
       number.trim() !== "" &&
       city.trim() !== "" &&
       uf.trim() !== "" &&
-      buyerName.trim() !== "" &&
-      /\S+@\S+\.\S+/.test(email) &&
-      whatsapp.trim() !== "",
-    [text, recipient, cep, street, number, city, uf, buyerName, email, whatsapp],
+      buyerResult.success,
+    [text, recipient, cep, street, number, city, uf, buyerResult.success],
   );
 
   const goToCheckout = async () => {
@@ -158,15 +224,15 @@ export function Builder() {
     const controller = new AbortController();
     cepRequest.current = controller;
     editedAddressFields.current.clear();
-    setCepLoading(true);
-    setCepStatus("Buscando endereço…");
+    setAutofilled(new Set());
+    setCepStatus({ kind: "loading", message: "Buscando endereço…" });
     const timeout = window.setTimeout(() => {
       controller.abort();
       if (cepRequest.current === controller) {
-        setCepLoading(false);
-        setCepStatus(
-          "A consulta demorou demais. Tente novamente ou preencha o endereço manualmente.",
-        );
+        setCepStatus({
+          kind: "error",
+          message: "A consulta demorou demais. Tente de novo ou preencha à mão.",
+        });
       }
     }, 8000);
     try {
@@ -183,28 +249,40 @@ export function Builder() {
       };
       if (controller.signal.aborted || currentCep.current !== digits) return;
       if (data.erro) {
-        setCepStatus("CEP não encontrado. Confira os números ou preencha o endereço manualmente.");
+        setCepStatus({
+          kind: "error",
+          message: "CEP não encontrado. Confira os números ou preencha à mão.",
+        });
         return;
       }
       if (!data.localidade || !data.uf) throw new Error("Endereço incompleto");
-      if (!editedAddressFields.current.has("street")) setStreet(data.logradouro ?? "");
-      if (!editedAddressFields.current.has("district")) setDistrict(data.bairro ?? "");
-      if (!editedAddressFields.current.has("city")) setCity(data.localidade);
-      if (!editedAddressFields.current.has("uf")) setUf(data.uf);
+      const found: [string, string, (value: string) => void][] = [
+        ["street", data.logradouro ?? "", setStreet],
+        ["district", data.bairro ?? "", setDistrict],
+        ["city", data.localidade, setCity],
+        ["uf", data.uf, setUf],
+      ];
+      const filled = new Set<string>();
+      for (const [field, value, set] of found) {
+        if (editedAddressFields.current.has(field)) continue;
+        set(value);
+        if (value) filled.add(field);
+      }
+      setAutofilled(filled);
       setCepStatus(
         data.logradouro && data.bairro
-          ? "Endereço encontrado! Confira os dados e informe o número e o complemento, se houver."
-          : "Cidade e estado encontrados. Complete os campos de endereço que faltam.",
+          ? { kind: "found", message: "Endereço encontrado. Confira e informe o número." }
+          : { kind: "partial", message: "Cidade encontrada. Complete a rua e o bairro." },
       );
     } catch {
       if (!controller.signal.aborted) {
-        setCepStatus(
-          "Não foi possível consultar o CEP. Tente novamente ou preencha o endereço manualmente.",
-        );
+        setCepStatus({
+          kind: "error",
+          message: "Não foi possível consultar o CEP. Tente de novo ou preencha à mão.",
+        });
       }
     } finally {
       window.clearTimeout(timeout);
-      if (cepRequest.current === controller) setCepLoading(false);
     }
   };
 
@@ -337,29 +415,12 @@ export function Builder() {
                       currentCep.current = digits;
                       cepRequest.current?.abort();
                       cepRequest.current = null;
-                      setCepLoading(false);
-                      setCepStatus("Digite os 8 números do CEP para buscar o endereço.");
+                      setCepStatus(CEP_IDLE);
                       if (digits.length === 8) void lookupCep(digits);
                     }}
                     placeholder="00000-000"
                     className="mt-2 rounded-xl"
                   />
-                  <p
-                    id="cep-status"
-                    role="status"
-                    className="mt-2 text-xs leading-relaxed text-muted-foreground"
-                  >
-                    {cepStatus}
-                  </p>
-                  {cep.replace(/\D/g, "").length === 8 && !cepLoading && (
-                    <button
-                      type="button"
-                      onClick={() => void lookupCep(cep)}
-                      className="mt-2 text-xs text-wine underline underline-offset-4"
-                    >
-                      Buscar endereço novamente
-                    </button>
-                  )}
                 </div>
                 <div className="sm:col-span-2">
                   <Label htmlFor="rua">Rua</Label>
@@ -367,12 +428,36 @@ export function Builder() {
                     id="rua"
                     value={street}
                     onChange={(e) => {
-                      editedAddressFields.current.add("street");
+                      markEdited("street");
                       setStreet(e.target.value);
                     }}
                     autoComplete="address-line1"
-                    className="mt-2 rounded-xl"
+                    className={fieldClass("street")}
                   />
+                </div>
+                <div className="-mt-1 flex items-start gap-2 text-xs leading-relaxed sm:col-span-3">
+                  <CepStatusIcon kind={cepStatus.kind} />
+                  <p
+                    id="cep-status"
+                    role="status"
+                    className={
+                      cepStatus.kind === "error" ? "text-destructive" : "text-muted-foreground"
+                    }
+                  >
+                    {cepStatus.message}
+                    {cep.replace(/\D/g, "").length === 8 && !cepLoading && (
+                      <>
+                        {" "}
+                        <button
+                          type="button"
+                          onClick={() => void lookupCep(cep)}
+                          className="whitespace-nowrap text-muted-foreground underline decoration-dotted underline-offset-4 transition-colors hover:text-[var(--wine)]"
+                        >
+                          Buscar de novo
+                        </button>
+                      </>
+                    )}
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="numero">Número</Label>
@@ -398,10 +483,10 @@ export function Builder() {
                     id="bairro"
                     value={district}
                     onChange={(e) => {
-                      editedAddressFields.current.add("district");
+                      markEdited("district");
                       setDistrict(e.target.value);
                     }}
-                    className="mt-2 rounded-xl"
+                    className={fieldClass("district")}
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -410,11 +495,11 @@ export function Builder() {
                     id="cidade"
                     value={city}
                     onChange={(e) => {
-                      editedAddressFields.current.add("city");
+                      markEdited("city");
                       setCity(e.target.value);
                     }}
                     autoComplete="address-level2"
-                    className="mt-2 rounded-xl"
+                    className={fieldClass("city")}
                   />
                 </div>
                 <div>
@@ -424,11 +509,11 @@ export function Builder() {
                     maxLength={2}
                     value={uf}
                     onChange={(e) => {
-                      editedAddressFields.current.add("uf");
+                      markEdited("uf");
                       setUf(e.target.value.toUpperCase());
                     }}
                     autoComplete="address-level1"
-                    className="mt-2 rounded-xl"
+                    className={fieldClass("uf")}
                   />
                 </div>
               </div>
@@ -437,35 +522,38 @@ export function Builder() {
             <div className="space-y-4">
               <h3 className="text-lg">Seus dados</h3>
               <div className="grid gap-4 sm:grid-cols-3">
-                <div>
-                  <Label htmlFor="nome">Seu nome</Label>
-                  <Input
-                    id="nome"
-                    value={buyerName}
-                    onChange={(e) => setBuyerName(e.target.value)}
-                    className="mt-2 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="email">E-mail</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="mt-2 rounded-xl"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="whatsapp">WhatsApp</Label>
-                  <Input
-                    id="whatsapp"
-                    inputMode="tel"
-                    value={whatsapp}
-                    onChange={(e) => setWhatsapp(e.target.value)}
-                    className="mt-2 rounded-xl"
-                  />
-                </div>
+                <BuyerInput
+                  id="nome"
+                  label="Seu nome"
+                  error={errorFor("buyerName")}
+                  value={buyerName}
+                  onChange={(e) => setBuyerName(e.target.value)}
+                  onBlur={() => touch("buyerName")}
+                  autoComplete="name"
+                />
+                <BuyerInput
+                  id="email"
+                  label="E-mail"
+                  error={errorFor("email")}
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  onBlur={() => touch("email")}
+                  autoComplete="email"
+                  placeholder="voce@email.com"
+                />
+                <BuyerInput
+                  id="whatsapp"
+                  label="WhatsApp"
+                  error={errorFor("whatsapp")}
+                  type="tel"
+                  inputMode="tel"
+                  value={whatsapp}
+                  onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))}
+                  onBlur={() => touch("whatsapp")}
+                  autoComplete="tel-national"
+                  placeholder="(11) 91234-5678"
+                />
               </div>
               <label className="flex cursor-pointer items-center gap-3 text-sm">
                 <Checkbox
@@ -535,7 +623,7 @@ export function Builder() {
               </button>
               {!canSubmit && (
                 <p className="mt-3 text-center text-xs text-muted-foreground">
-                  Escreva pelo menos 20 caracteres e preencha os dados de entrega.
+                  Escreva pelo menos 20 caracteres e preencha o endereço e seus dados.
                 </p>
               )}
             </div>
