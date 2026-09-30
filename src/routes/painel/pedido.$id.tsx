@@ -7,7 +7,13 @@ import { Card, StatusBadge } from "@/components/painel/ui";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ENVELOPE_COLORS, EXTRAS, SEAL_COLORS, formatBRL } from "@/lib/napkin";
-import { ORDER_STATUSES, envelopeLines, labelOf, type OrderStatusId } from "@/lib/order";
+import {
+  ORDER_STATUSES,
+  envelopeLines,
+  formatWhatsapp,
+  labelOf,
+  type OrderStatusId,
+} from "@/lib/order";
 import { getOrder, saveTracking, setOrderStatus } from "@/lib/painel.functions";
 
 export const Route = createFileRoute("/painel/pedido/$id")({
@@ -213,7 +219,7 @@ function OrderDetail() {
                   </a>
                 }
               />
-              <Row label="WhatsApp" value={order.whatsapp} />
+              <Row label="WhatsApp" value={formatWhatsapp(order.whatsapp)} />
             </dl>
             <a
               href={whatsappLink(
