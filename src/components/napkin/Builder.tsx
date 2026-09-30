@@ -174,7 +174,7 @@ export function Builder() {
 
   return (
     <section id="montar" className="bg-[var(--blush)] py-20 md:py-28">
-      <div className="mx-auto max-w-6xl px-6">
+      <div className="section-container">
         <h2 className="text-3xl text-[var(--wine-deep)] md:text-4xl dark:text-foreground">
           Monte sua carta
         </h2>

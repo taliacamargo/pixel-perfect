@@ -2,7 +2,7 @@ import letterEnvelopes from "@/assets/carta-envelopes.jpeg";
 
 export function Story() {
   return (
-    <section className="mx-auto grid max-w-5xl items-center gap-10 px-6 py-20 md:grid-cols-2 md:py-28">
+    <section className="section-container grid items-center gap-10 py-20 md:grid-cols-2 md:py-28">
       <img
         src={letterEnvelopes}
         alt="Carta manuscrita com envelopes vinho, lacre dourado e sinetes sobre uma superfície cinza"

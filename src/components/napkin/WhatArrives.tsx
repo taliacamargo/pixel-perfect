@@ -19,7 +19,7 @@ const ITEMS = [
 
 export function WhatArrives() {
   return (
-    <section className="mx-auto max-w-5xl px-6 py-20 md:py-28">
+    <section className="section-container py-20 md:py-28">
       <h2 className="text-3xl md:text-4xl">O que chega na casa de quem você ama</h2>
       <p className="mt-4 max-w-xl leading-relaxed text-muted-foreground">
         Nada é impresso. Cada linha é escrita por mim, com caneta, uma carta de cada vez.

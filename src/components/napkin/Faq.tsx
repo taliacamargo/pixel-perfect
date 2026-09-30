@@ -31,7 +31,7 @@ const QUESTIONS = [
 export function Faq() {
   return (
     <section className="border-t border-border bg-card/40 py-20 md:py-24">
-      <div className="mx-auto max-w-3xl px-6">
+      <div className="section-container">
         <h2 className="text-3xl md:text-4xl">Dúvidas</h2>
         <Accordion type="single" collapsible className="mt-8">
           {QUESTIONS.map((item) => (
