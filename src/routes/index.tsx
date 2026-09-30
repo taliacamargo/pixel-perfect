@@ -1,24 +1,43 @@
 import { createFileRoute } from "@tanstack/react-router";
 
-// No head() here: the home route inherits title/description/og/twitter from
-// __root.tsx, and ships no og:image so serve-time hosting can inject the
-// project's social preview (explicit og:image or latest screenshot).
+import { Hero } from "@/components/napkin/Hero";
+import { Story } from "@/components/napkin/Story";
+import { HowItWorks } from "@/components/napkin/HowItWorks";
+import { Builder } from "@/components/napkin/Builder";
+import { WhatArrives } from "@/components/napkin/WhatArrives";
+import { Faq } from "@/components/napkin/Faq";
+import { SiteFooter } from "@/components/napkin/SiteFooter";
+
+const TITLE = "Napkin Notes · cartas de amor escritas à mão";
+const DESCRIPTION =
+  "Você escreve o que sente. Eu passo à mão, fecho com lacre de cera e envio pelo correio.";
+
 export const Route = createFileRoute("/")({
+  head: () => ({
+    meta: [
+      { title: TITLE },
+      { name: "description", content: DESCRIPTION },
+      { property: "og:title", content: TITLE },
+      { property: "og:description", content: DESCRIPTION },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "/" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+    links: [{ rel: "canonical", href: "/" }],
+  }),
   component: Index,
 });
 
-// IMPORTANT: Replace this placeholder. See ./README.md for routing conventions.
 function Index() {
   return (
-    <div
-      className="flex min-h-screen items-center justify-center"
-      style={{ backgroundColor: "#fcfbf8" }}
-    >
-      <img
-        data-lovable-blank-page-placeholder="REMOVE_THIS"
-        src="https://cdn.gpteng.co/blank-app-v1.svg"
-        alt="Your app will live here!"
-      />
-    </div>
+    <main>
+      <Hero />
+      <Story />
+      <HowItWorks />
+      <Builder />
+      <WhatArrives />
+      <Faq />
+      <SiteFooter />
+    </main>
   );
 }
