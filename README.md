@@ -1,24 +1,25 @@
-# Pixel Perfect
+﻿# Napkin Notes
 
-Implement exactly the screenshot and nothing else
+Cartas de amor escritas à mão, personalizadas e enviadas para todo o Brasil.
 
-This project was built with [Lovable](https://lovable.dev).
+Domínio: https://www.napkinotes.com.br/
 
-## Build with Lovable
+## Desenvolvimento
 
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/e31cbb68-27bc-4720-aafd-2b08d2c2cccf).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
+React, TanStack Start, Vite, Tailwind CSS e Motion. Use Node.js 22.12+ e pnpm.
 
 ```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+pnpm install --frozen-lockfile
+pnpm dev
+pnpm build
+pnpm preview
 ```
+
+O build usa Nitro com destino Cloudflare Workers. A publicação e a configuração de DNS são feitas na hospedagem; o build local não publica o site.
+
+## Identidade e SEO
+
+- Metadados: `src/lib/site.ts` e `src/routes/index.tsx`.
+- Ícones e imagem de compartilhamento: `public/`.
+- Indexação: `public/robots.txt` e `public/sitemap.xml`.
+- Animações: `src/components/napkin/FadeIn.tsx`; respeitam movimento reduzido e preservam o conteúdo sem JavaScript.

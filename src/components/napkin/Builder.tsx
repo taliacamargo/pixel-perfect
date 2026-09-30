@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { EnvelopePreview } from "@/components/napkin/EnvelopePreview";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -367,22 +368,7 @@ export function Builder() {
                 </p>
               </div>
 
-              <div className="mt-6 flex items-center gap-4">
-                <div
-                  className="relative flex h-16 w-24 items-center justify-center rounded-md border border-border"
-                  style={{ backgroundColor: envelopeColor.hex }}
-                  aria-hidden
-                >
-                  <span
-                    className="size-5 rotate-45 rounded-[4px] rounded-tl-full rounded-tr-full"
-                    style={{ backgroundColor: sealColor.hex }}
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Envelope {envelopeColor.label.toLowerCase()} com lacre{" "}
-                  {sealColor.label.toLowerCase()}.
-                </p>
-              </div>
+              <EnvelopePreview envelope={envelopeColor} seal={sealColor} />
             </div>
 
             <div className="rounded-3xl bg-card p-6 md:p-8">
