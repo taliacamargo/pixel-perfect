@@ -15,7 +15,9 @@ pnpm build
 pnpm preview
 ```
 
-O build usa Nitro com destino Cloudflare Workers. A publicação e a configuração de DNS são feitas na hospedagem; o build local não publica o site.
+O build usa Nitro com destino Vercel e gera `.vercel/output`, com os arquivos estáticos e a função de renderização no servidor. `vercel.json` define o framework, o comando de build e o diretório de saída, substituindo a configuração antiga de `dist`.
+
+Para publicar, envie as alterações ao repositório conectado à Vercel e execute um novo deploy. A raiz do projeto na Vercel deve ser a pasta que contém `package.json` e `vercel.json`. O build local não publica o site.
 
 ## Identidade e SEO
 
