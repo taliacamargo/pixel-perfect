@@ -1,0 +1,65 @@
+/* Estilos do painel (/painel). Carregado só nessas rotas, no lugar de styles.css,
+   porque o HeroUI define variáveis globais (--background, --accent…) com os mesmos
+   nomes das do site. */
+@import "tailwindcss" source(none);
+@import "@heroui/styles";
+/* Só as classes usadas no painel entram neste CSS. */
+@source "./routes/painel";
+@source "./components/painel";
+@source "./components/ui/sonner.tsx";
+
+/* Tema HeroUI com o vinho da marca, em tom suave. O modo vem da classe light/dark
+   no <html>, aplicada pelo script de tema do painel.
+   Contrastes conferidos (WCAG): textos ≥ 4,5:1 e borda dos campos ≥ 3:1 nos dois modos. */
+:root,
+.light,
+[data-theme="light"] {
+  --foreground: oklch(0.22 0.02 350);
+  --accent: oklch(0.43 0.13 12);
+  --accent-foreground: oklch(0.99 0.003 40);
+  --background: oklch(0.945 0.008 30);
+  --surface: oklch(1 0 0);
+  --surface-secondary: oklch(0.962 0.006 30);
+  --surface-tertiary: oklch(0.945 0.008 30);
+  --default: oklch(0.935 0.008 30);
+  --border: oklch(0.86 0.012 30);
+  --separator: oklch(0.9 0.008 30);
+  --muted: oklch(0.46 0.018 350);
+  --field-background: oklch(0.975 0.005 30);
+  --field-border: oklch(0.62 0.015 30);
+  --field-border-width: 1px;
+  --focus: var(--accent);
+  /* Botão desativado continua legível. */
+  --disabled-opacity: 0.65;
+}
+
+.dark,
+[data-theme="dark"] {
+  --foreground: oklch(0.96 0.006 40);
+  --accent: oklch(0.78 0.085 12);
+  --accent-foreground: oklch(0.2 0.02 350);
+  --background: oklch(0.15 0.008 350);
+  --surface: oklch(0.21 0.012 350);
+  --surface-secondary: oklch(0.245 0.012 350);
+  --surface-tertiary: oklch(0.27 0.013 350);
+  --default: oklch(0.27 0.012 350);
+  --border: oklch(0.32 0.014 350);
+  --separator: oklch(0.28 0.01 350);
+  --muted: oklch(0.75 0.015 350);
+  --field-background: oklch(0.17 0.01 350);
+  --field-border: oklch(0.52 0.014 350);
+  --field-border-width: 1px;
+  --focus: var(--accent);
+  --disabled-opacity: 0.65;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: "Poppins", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Cartões com contorno, para se destacarem do fundo. */
+.card {
+  border: 1px solid var(--border);
+}
