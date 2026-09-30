@@ -18,6 +18,7 @@ import {
   formatBRL,
   type ColorOption,
 } from "@/lib/napkin";
+import { orderItems } from "@/lib/order";
 
 function Swatches({
   options,
@@ -81,14 +82,12 @@ export function Builder() {
   const [buyerName, setBuyerName] = useState("");
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const envelopeColor = ENVELOPE_COLORS.find((c) => c.id === envelope)!;
   const sealColor = SEAL_COLORS.find((c) => c.id === seal)!;
   const chosenExtras = EXTRAS.filter((extra) => extras.includes(extra.id));
-  const total =
-    BASE_PRICE +
-    (envelopeColor.price ?? 0) +
-    chosenExtras.reduce((sum, extra) => sum + extra.price, 0);
+  const total = orderItems({ envelope, extras }).reduce((sum, item) => sum + item.price, 0);
   const atLimit = text.length >= MAX_CHARS;
 
   const canSubmit = useMemo(
@@ -105,6 +104,43 @@ export function Builder() {
       whatsapp.trim() !== "",
     [text, recipient, cep, street, number, city, uf, buyerName, email, whatsapp],
   );
+
+  const goToCheckout = async () => {
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          text,
+          envelope,
+          seal,
+          extras,
+          anonymous,
+          recipient,
+          cep,
+          street,
+          number,
+          complement,
+          district,
+          city,
+          uf,
+          buyerName,
+          email,
+          whatsapp,
+        }),
+      });
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!res.ok || !data.url) throw new Error(data.error);
+      window.location.assign(data.url);
+    } catch (error) {
+      toast.error(
+        (error instanceof Error && error.message) ||
+          "Não foi possível iniciar o pagamento. Tente novamente em instantes.",
+      );
+      setSubmitting(false);
+    }
+  };
 
   const applyTemplate = (template: (typeof TEMPLATES)[number]) => {
     if (
@@ -491,15 +527,11 @@ export function Builder() {
 
               <button
                 type="button"
-                disabled={!canSubmit}
-                onClick={() =>
-                  toast.success(
-                    "Carta pronta! O pagamento por Pix e cartão entra no ar em breve — por enquanto me chame no WhatsApp para finalizar.",
-                  )
-                }
+                disabled={!canSubmit || submitting}
+                onClick={() => void goToCheckout()}
                 className="mt-6 w-full rounded-full bg-[var(--wine)] px-6 py-3.5 text-sm font-semibold text-[oklch(0.98_0.005_40)] transition-colors hover:bg-[var(--wine-deep)] disabled:cursor-not-allowed disabled:opacity-40"
               >
-                Ir para o pagamento
+                {submitting ? "Abrindo o pagamento…" : "Ir para o pagamento"}
               </button>
               {!canSubmit && (
                 <p className="mt-3 text-center text-xs text-muted-foreground">
