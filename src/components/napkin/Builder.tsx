@@ -1,0 +1,417 @@
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
+
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  BASE_PRICE,
+  ENVELOPE_COLORS,
+  EXTRAS,
+  MAX_CHARS,
+  SEAL_COLORS,
+  TEMPLATES,
+  formatBRL,
+  type ColorOption,
+} from "@/lib/napkin";
+
+function Swatches({
+  options,
+  value,
+  onChange,
+  name,
+}: {
+  options: ColorOption[];
+  value: string;
+  onChange: (id: string) => void;
+  name: string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-4">
+      {options.map((option) => (
+        <button
+          key={option.id}
+          type="button"
+          aria-pressed={value === option.id}
+          aria-label={`${name}: ${option.label}`}
+          onClick={() => onChange(option.id)}
+          className="flex flex-col items-center gap-2 text-xs text-muted-foreground"
+        >
+          <span
+            className={`size-10 rounded-full border transition-all duration-200 ${
+              value === option.id
+                ? "border-foreground/40 ring-2 ring-[var(--wine)] ring-offset-2 ring-offset-[var(--blush)]"
+                : "border-border"
+            }`}
+            style={{ backgroundColor: option.hex }}
+          />
+          {option.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function Builder() {
+  const [text, setText] = useState("");
+  const [envelope, setEnvelope] = useState("vinho");
+  const [seal, setSeal] = useState("perola");
+  const [extras, setExtras] = useState<string[]>([]);
+  const [anonymous, setAnonymous] = useState(false);
+
+  const [recipient, setRecipient] = useState("");
+  const [cep, setCep] = useState("");
+  const [street, setStreet] = useState("");
+  const [number, setNumber] = useState("");
+  const [complement, setComplement] = useState("");
+  const [district, setDistrict] = useState("");
+  const [city, setCity] = useState("");
+  const [uf, setUf] = useState("");
+
+  const [buyerName, setBuyerName] = useState("");
+  const [email, setEmail] = useState("");
+  const [whatsapp, setWhatsapp] = useState("");
+
+  const envelopeColor = ENVELOPE_COLORS.find((c) => c.id === envelope)!;
+  const sealColor = SEAL_COLORS.find((c) => c.id === seal)!;
+  const chosenExtras = EXTRAS.filter((extra) => extras.includes(extra.id));
+  const total = BASE_PRICE + chosenExtras.reduce((sum, extra) => sum + extra.price, 0);
+  const atLimit = text.length >= MAX_CHARS;
+
+  const canSubmit = useMemo(
+    () =>
+      text.trim().length >= 20 &&
+      recipient.trim() !== "" &&
+      cep.replace(/\D/g, "").length === 8 &&
+      street.trim() !== "" &&
+      number.trim() !== "" &&
+      city.trim() !== "" &&
+      uf.trim() !== "" &&
+      buyerName.trim() !== "" &&
+      /\S+@\S+\.\S+/.test(email) &&
+      whatsapp.trim() !== "",
+    [text, recipient, cep, street, number, city, uf, buyerName, email, whatsapp],
+  );
+
+  const applyTemplate = (template: (typeof TEMPLATES)[number]) => {
+    if (text.trim() && !window.confirm("Isso vai substituir o texto que você já escreveu. Tudo bem?"))
+      return;
+    setText(template.text.slice(0, MAX_CHARS));
+  };
+
+  const lookupCep = async (raw: string) => {
+    const digits = raw.replace(/\D/g, "");
+    if (digits.length !== 8) return;
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      const data = (await res.json()) as {
+        erro?: boolean;
+        logradouro?: string;
+        bairro?: string;
+        localidade?: string;
+        uf?: string;
+      };
+      if (data.erro) {
+        toast.error("Não encontrei esse CEP. Confere pra mim?");
+        return;
+      }
+      setStreet(data.logradouro ?? "");
+      setDistrict(data.bairro ?? "");
+      setCity(data.localidade ?? "");
+      setUf(data.uf ?? "");
+    } catch {
+      toast.error("Não consegui buscar o CEP agora. Preencha o endereço à mão.");
+    }
+  };
+
+  return (
+    <section id="montar" className="bg-[var(--blush)] py-20 md:py-28">
+      <div className="mx-auto max-w-6xl px-6">
+        <h2 className="text-3xl text-[var(--wine-deep)] md:text-4xl dark:text-foreground">
+          Monte sua carta
+        </h2>
+        <p className="mt-3 max-w-xl leading-relaxed text-[var(--wine-deep)]/75 dark:text-muted-foreground">
+          Escreva o que sente, escolha o visual e veja a prévia mudar enquanto você monta.
+        </p>
+
+        <div className="mt-10 grid gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-start">
+          {/* Formulário */}
+          <div className="space-y-10 rounded-3xl bg-card p-6 md:p-8">
+            <div>
+              <Label htmlFor="carta">O texto da sua carta</Label>
+              <Textarea
+                id="carta"
+                value={text}
+                maxLength={MAX_CHARS}
+                onChange={(e) => setText(e.target.value)}
+                rows={10}
+                placeholder="Meu amor, hoje eu quis te escrever…"
+                className="mt-2 resize-none rounded-2xl"
+              />
+              <div className="mt-2 flex items-center justify-between text-xs">
+                <span className={atLimit ? "text-destructive" : "text-muted-foreground"}>
+                  {atLimit ? "Você chegou ao limite da folha" : "Cabe em uma folha A4"}
+                </span>
+                <span className="font-light text-muted-foreground">
+                  {text.length.toLocaleString("pt-BR")} / 1.800
+                </span>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {TEMPLATES.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    onClick={() => applyTemplate(template)}
+                    className="rounded-full border border-border px-4 py-2 text-xs transition-colors hover:bg-accent"
+                  >
+                    {template.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <Label className="mb-3 block">Cor do envelope</Label>
+                <Swatches
+                  name="Envelope"
+                  options={ENVELOPE_COLORS}
+                  value={envelope}
+                  onChange={setEnvelope}
+                />
+              </div>
+              <div>
+                <Label className="mb-3 block">Cor do lacre</Label>
+                <Swatches name="Lacre" options={SEAL_COLORS} value={seal} onChange={setSeal} />
+              </div>
+            </div>
+
+            <div>
+              <Label className="mb-3 block">Adicionais</Label>
+              <div className="space-y-3">
+                {EXTRAS.map((extra) => (
+                  <label
+                    key={extra.id}
+                    className="flex cursor-pointer items-start gap-3 rounded-2xl border border-border p-4"
+                  >
+                    <Checkbox
+                      checked={extras.includes(extra.id)}
+                      onCheckedChange={(checked) =>
+                        setExtras((prev) =>
+                          checked ? [...prev, extra.id] : prev.filter((id) => id !== extra.id),
+                        )
+                      }
+                      className="mt-0.5"
+                    />
+                    <span className="flex-1 text-sm">
+                      {extra.label}
+                      <span className="block text-xs text-muted-foreground">
+                        {extra.description}
+                      </span>
+                    </span>
+                    <span className="text-sm font-light">+ {formatBRL(extra.price)}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg">Para quem vai a carta</h3>
+              <div>
+                <Label htmlFor="destinatario">Nome de quem vai receber</Label>
+                <Input
+                  id="destinatario"
+                  value={recipient}
+                  onChange={(e) => setRecipient(e.target.value)}
+                  className="mt-2 rounded-xl"
+                />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <Label htmlFor="cep">CEP</Label>
+                  <Input
+                    id="cep"
+                    inputMode="numeric"
+                    value={cep}
+                    onChange={(e) => {
+                      setCep(e.target.value);
+                      void lookupCep(e.target.value);
+                    }}
+                    onBlur={(e) => void lookupCep(e.target.value)}
+                    placeholder="00000-000"
+                    className="mt-2 rounded-xl"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="rua">Rua</Label>
+                  <Input
+                    id="rua"
+                    value={street}
+                    onChange={(e) => setStreet(e.target.value)}
+                    className="mt-2 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="numero">Número</Label>
+                  <Input
+                    id="numero"
+                    value={number}
+                    onChange={(e) => setNumber(e.target.value)}
+                    className="mt-2 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="complemento">Complemento</Label>
+                  <Input
+                    id="complemento"
+                    value={complement}
+                    onChange={(e) => setComplement(e.target.value)}
+                    className="mt-2 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="bairro">Bairro</Label>
+                  <Input
+                    id="bairro"
+                    value={district}
+                    onChange={(e) => setDistrict(e.target.value)}
+                    className="mt-2 rounded-xl"
+                  />
+                </div>
+                <div className="sm:col-span-2">
+                  <Label htmlFor="cidade">Cidade</Label>
+                  <Input
+                    id="cidade"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    className="mt-2 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="uf">Estado</Label>
+                  <Input
+                    id="uf"
+                    maxLength={2}
+                    value={uf}
+                    onChange={(e) => setUf(e.target.value.toUpperCase())}
+                    className="mt-2 rounded-xl"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <h3 className="text-lg">Seus dados</h3>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <div>
+                  <Label htmlFor="nome">Seu nome</Label>
+                  <Input
+                    id="nome"
+                    value={buyerName}
+                    onChange={(e) => setBuyerName(e.target.value)}
+                    className="mt-2 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="mt-2 rounded-xl"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="whatsapp">WhatsApp</Label>
+                  <Input
+                    id="whatsapp"
+                    inputMode="tel"
+                    value={whatsapp}
+                    onChange={(e) => setWhatsapp(e.target.value)}
+                    className="mt-2 rounded-xl"
+                  />
+                </div>
+              </div>
+              <label className="flex cursor-pointer items-center gap-3 text-sm">
+                <Checkbox
+                  checked={anonymous}
+                  onCheckedChange={(checked) => setAnonymous(checked === true)}
+                />
+                Quero que a carta seja anônima
+              </label>
+            </div>
+          </div>
+
+          {/* Prévia */}
+          <aside className="space-y-6 lg:sticky lg:top-8">
+            <div className="rounded-3xl bg-card p-6 shadow-sm md:p-8">
+              <div className="ruled-paper min-h-72 rounded-2xl border border-border bg-[var(--paper)] p-6 dark:bg-card">
+                <p className="font-[family-name:var(--font-hand)] text-[0.78rem] leading-[2.1rem] break-words whitespace-pre-wrap text-foreground/85">
+                  {text || "Sua carta aparece aqui, do jeitinho que você escrever."}
+                </p>
+              </div>
+
+              <div className="mt-6 flex items-center gap-4">
+                <div
+                  className="relative flex h-16 w-24 items-center justify-center rounded-md border border-border"
+                  style={{ backgroundColor: envelopeColor.hex }}
+                  aria-hidden
+                >
+                  <span
+                    className="size-5 rotate-45 rounded-[4px] rounded-tl-full rounded-tr-full"
+                    style={{ backgroundColor: sealColor.hex }}
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground">
+                  Envelope {envelopeColor.label.toLowerCase()} com lacre{" "}
+                  {sealColor.label.toLowerCase()}.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl bg-card p-6 md:p-8">
+              <h3 className="text-lg">Resumo do pedido</h3>
+              <dl className="mt-4 space-y-2 text-sm">
+                <div className="flex justify-between gap-4">
+                  <dt className="text-muted-foreground">Carta escrita à mão + envio</dt>
+                  <dd className="font-light">{formatBRL(BASE_PRICE)}</dd>
+                </div>
+                {chosenExtras.map((extra) => (
+                  <div key={extra.id} className="flex justify-between gap-4">
+                    <dt className="text-muted-foreground">{extra.label}</dt>
+                    <dd className="font-light">{formatBRL(extra.price)}</dd>
+                  </div>
+                ))}
+                <div className="flex justify-between gap-4 border-t border-border pt-3 text-base">
+                  <dt>Total</dt>
+                  <dd className="font-semibold">{formatBRL(total)}</dd>
+                </div>
+              </dl>
+
+              <button
+                type="button"
+                disabled={!canSubmit}
+                onClick={() =>
+                  toast.success(
+                    "Carta pronta! O pagamento por Pix e cartão entra no ar em breve — por enquanto me chame no WhatsApp para finalizar.",
+                  )
+                }
+                className="mt-6 w-full rounded-full bg-[var(--wine)] px-6 py-3.5 text-sm font-semibold text-[oklch(0.98_0.005_40)] transition-colors hover:bg-[var(--wine-deep)] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Ir para o pagamento
+              </button>
+              {!canSubmit && (
+                <p className="mt-3 text-center text-xs text-muted-foreground">
+                  Escreva pelo menos 20 caracteres e preencha os dados de entrega.
+                </p>
+              )}
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+  );
+}
