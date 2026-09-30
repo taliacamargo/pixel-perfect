@@ -1,5 +1,6 @@
 import {
   Button,
+  Chip,
   Description,
   Form,
   Input,
@@ -9,7 +10,7 @@ import {
   buttonVariants,
 } from "@heroui/react";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Copy, MessageCircle } from "lucide-react";
+import { ArrowLeft, Check, Copy, MessageCircle } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
@@ -199,7 +200,25 @@ function OrderDetail() {
             <dl className="space-y-2 text-sm">
               <Row label="Envelope" value={labelOf(ENVELOPE_COLORS, order.envelope)} />
               <Row label="Lacre" value={labelOf(SEAL_COLORS, order.seal)} />
-              <Row label="Adicionais" value={extras.length ? extras.join(", ") : "Nenhum"} />
+              <div className="border-t border-separator pt-3">
+                <dt className="text-muted">Adicionais</dt>
+                <dd className="mt-2">
+                  {extras.length ? (
+                    <ul className="flex flex-wrap gap-1.5">
+                      {extras.map((extra) => (
+                        <li key={extra}>
+                          <Chip size="sm" variant="secondary">
+                            <Check className="size-3" aria-hidden />
+                            <Chip.Label>{extra}</Chip.Label>
+                          </Chip>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-muted">Nenhum</span>
+                  )}
+                </dd>
+              </div>
             </dl>
           </Section>
 
@@ -242,7 +261,7 @@ function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex justify-between gap-4">
       <dt className="text-muted">{label}</dt>
-      <dd className="text-right break-all">{value}</dd>
+      <dd className="text-right [overflow-wrap:anywhere]">{value}</dd>
     </div>
   );
 }
