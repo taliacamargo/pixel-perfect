@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EnvelopePreview } from "@/components/napkin/EnvelopePreview";
 
@@ -65,6 +65,12 @@ export function Builder() {
 
   const [recipient, setRecipient] = useState("");
   const [cep, setCep] = useState("");
+  const [cepStatus, setCepStatus] = useState("Digite o CEP para buscar o endereço.");
+  const [cepLoading, setCepLoading] = useState(false);
+  const cepRequest = useRef<AbortController | null>(null);
+  const currentCep = useRef("");
+  const editedAddressFields = useRef(new Set<string>());
+  useEffect(() => () => cepRequest.current?.abort(), []);
   const [street, setStreet] = useState("");
   const [number, setNumber] = useState("");
   const [complement, setComplement] = useState("");
@@ -101,7 +107,10 @@ export function Builder() {
   );
 
   const applyTemplate = (template: (typeof TEMPLATES)[number]) => {
-    if (text.trim() && !window.confirm("Isso vai substituir o texto que você já escreveu. Tudo bem?"))
+    if (
+      text.trim() &&
+      !window.confirm("Isso vai substituir o texto que você já escreveu. Tudo bem?")
+    )
       return;
     setText(template.text.slice(0, MAX_CHARS));
   };
@@ -109,31 +118,63 @@ export function Builder() {
   const lookupCep = async (raw: string) => {
     const digits = raw.replace(/\D/g, "");
     if (digits.length !== 8) return;
+    cepRequest.current?.abort();
+    const controller = new AbortController();
+    cepRequest.current = controller;
+    editedAddressFields.current.clear();
+    setCepLoading(true);
+    setCepStatus("Buscando endereço…");
+    const timeout = window.setTimeout(() => {
+      controller.abort();
+      if (cepRequest.current === controller) {
+        setCepLoading(false);
+        setCepStatus(
+          "A consulta demorou demais. Tente novamente ou preencha o endereço manualmente.",
+        );
+      }
+    }, 8000);
     try {
-      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`);
+      const res = await fetch(`https://viacep.com.br/ws/${digits}/json/`, {
+        signal: controller.signal,
+      });
+      if (!res.ok) throw new Error("Falha na consulta do CEP");
       const data = (await res.json()) as {
-        erro?: boolean;
+        erro?: boolean | string;
         logradouro?: string;
         bairro?: string;
         localidade?: string;
         uf?: string;
       };
+      if (controller.signal.aborted || currentCep.current !== digits) return;
       if (data.erro) {
-        toast.error("Não encontrei esse CEP. Confere pra mim?");
+        setCepStatus("CEP não encontrado. Confira os números ou preencha o endereço manualmente.");
         return;
       }
-      setStreet(data.logradouro ?? "");
-      setDistrict(data.bairro ?? "");
-      setCity(data.localidade ?? "");
-      setUf(data.uf ?? "");
+      if (!data.localidade || !data.uf) throw new Error("Endereço incompleto");
+      if (!editedAddressFields.current.has("street")) setStreet(data.logradouro ?? "");
+      if (!editedAddressFields.current.has("district")) setDistrict(data.bairro ?? "");
+      if (!editedAddressFields.current.has("city")) setCity(data.localidade);
+      if (!editedAddressFields.current.has("uf")) setUf(data.uf);
+      setCepStatus(
+        data.logradouro && data.bairro
+          ? "Endereço encontrado! Confira os dados e informe o número e o complemento, se houver."
+          : "Cidade e estado encontrados. Complete os campos de endereço que faltam.",
+      );
     } catch {
-      toast.error("Não consegui buscar o CEP agora. Preencha o endereço à mão.");
+      if (!controller.signal.aborted) {
+        setCepStatus(
+          "Não foi possível consultar o CEP. Tente novamente ou preencha o endereço manualmente.",
+        );
+      }
+    } finally {
+      window.clearTimeout(timeout);
+      if (cepRequest.current === controller) setCepLoading(false);
     }
   };
 
   return (
     <section id="montar" className="bg-[var(--blush)] py-20 md:py-28">
-      <div className="mx-auto max-w-6xl px-6">
+      <div className="section-container">
         <h2 className="text-3xl text-[var(--wine-deep)] md:text-4xl dark:text-foreground">
           Monte sua carta
         </h2>
@@ -248,22 +289,52 @@ export function Builder() {
                   <Input
                     id="cep"
                     inputMode="numeric"
+                    autoComplete="postal-code"
+                    maxLength={9}
+                    aria-describedby="cep-status"
+                    aria-busy={cepLoading}
                     value={cep}
                     onChange={(e) => {
-                      setCep(e.target.value);
-                      void lookupCep(e.target.value);
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 8);
+                      setCep(digits.replace(/^(\d{5})(\d)/, "$1-$2"));
+                      if (digits === currentCep.current) return;
+                      currentCep.current = digits;
+                      cepRequest.current?.abort();
+                      cepRequest.current = null;
+                      setCepLoading(false);
+                      setCepStatus("Digite os 8 números do CEP para buscar o endereço.");
+                      if (digits.length === 8) void lookupCep(digits);
                     }}
-                    onBlur={(e) => void lookupCep(e.target.value)}
                     placeholder="00000-000"
                     className="mt-2 rounded-xl"
                   />
+                  <p
+                    id="cep-status"
+                    role="status"
+                    className="mt-2 text-xs leading-relaxed text-muted-foreground"
+                  >
+                    {cepStatus}
+                  </p>
+                  {cep.replace(/\D/g, "").length === 8 && !cepLoading && (
+                    <button
+                      type="button"
+                      onClick={() => void lookupCep(cep)}
+                      className="mt-2 text-xs text-wine underline underline-offset-4"
+                    >
+                      Buscar endereço novamente
+                    </button>
+                  )}
                 </div>
                 <div className="sm:col-span-2">
                   <Label htmlFor="rua">Rua</Label>
                   <Input
                     id="rua"
                     value={street}
-                    onChange={(e) => setStreet(e.target.value)}
+                    onChange={(e) => {
+                      editedAddressFields.current.add("street");
+                      setStreet(e.target.value);
+                    }}
+                    autoComplete="address-line1"
                     className="mt-2 rounded-xl"
                   />
                 </div>
@@ -290,7 +361,10 @@ export function Builder() {
                   <Input
                     id="bairro"
                     value={district}
-                    onChange={(e) => setDistrict(e.target.value)}
+                    onChange={(e) => {
+                      editedAddressFields.current.add("district");
+                      setDistrict(e.target.value);
+                    }}
                     className="mt-2 rounded-xl"
                   />
                 </div>
@@ -299,7 +373,11 @@ export function Builder() {
                   <Input
                     id="cidade"
                     value={city}
-                    onChange={(e) => setCity(e.target.value)}
+                    onChange={(e) => {
+                      editedAddressFields.current.add("city");
+                      setCity(e.target.value);
+                    }}
+                    autoComplete="address-level2"
                     className="mt-2 rounded-xl"
                   />
                 </div>
@@ -309,7 +387,11 @@ export function Builder() {
                     id="uf"
                     maxLength={2}
                     value={uf}
-                    onChange={(e) => setUf(e.target.value.toUpperCase())}
+                    onChange={(e) => {
+                      editedAddressFields.current.add("uf");
+                      setUf(e.target.value.toUpperCase());
+                    }}
+                    autoComplete="address-level1"
                     className="mt-2 rounded-xl"
                   />
                 </div>

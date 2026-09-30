@@ -3,11 +3,10 @@ import heroEnvelope from "@/assets/hero-envelope.png";
 export function Hero() {
   return (
     <section className="relative overflow-hidden bg-[var(--wine)] text-[oklch(0.98_0.005_40)]">
-      <div className="mx-auto grid max-w-6xl gap-10 px-6 pt-10 pb-16 md:grid-cols-2 md:items-center md:gap-14 md:pt-14 md:pb-24">
+      <div className="section-container grid gap-10 pt-10 pb-16 md:grid-cols-2 md:items-center md:gap-14 md:pt-14 md:pb-24">
         <header className="md:order-1">
           <p className="text-lg tracking-tight">
-            <span className="font-semibold">Napkin</span>{" "}
-            <span className="font-light">Notes</span>
+            <span className="font-semibold">Napkin</span> <span className="font-light">Notes</span>
           </p>
 
           <h1 className="mt-8 text-4xl leading-[1.1] font-semibold md:text-5xl">

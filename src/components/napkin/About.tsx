@@ -6,7 +6,7 @@ import memories from "@/assets/tata-memorias.jpg";
 export function About() {
   return (
     <section id="sobre-mim" aria-labelledby="about-title" className="overflow-hidden bg-rose/60">
-      <div className="mx-auto grid max-w-5xl items-center gap-10 px-6 py-20 md:grid-cols-2 md:gap-14 md:py-28">
+      <div className="section-container grid items-center gap-10 py-20 md:grid-cols-2 md:gap-14 md:py-28">
         <div className="relative mx-auto aspect-square w-full max-w-md">
           <div aria-hidden="true" className="absolute inset-[8%] rounded-full bg-blush/60" />
           <figure className="absolute top-[5%] left-[4%] z-10 w-[55%] -rotate-6 bg-white p-2 pb-3 shadow-lg sm:p-3 sm:pb-4">
