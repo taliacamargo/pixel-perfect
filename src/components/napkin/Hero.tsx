@@ -27,7 +27,7 @@ export function Hero() {
           </a>
 
           <p className="mt-4 text-sm font-light opacity-75">
-            A partir de R$ 69, com envio para todo o Brasil incluso.
+            A partir de R$ 49, com envio para todo o Brasil.
           </p>
         </header>
 

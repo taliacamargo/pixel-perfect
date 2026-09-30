@@ -9,11 +9,11 @@ const ITEMS = [
   },
   {
     title: "Envelope 180g",
-    text: "Colorido, no tamanho 11,4 x 16,2 cm, com a carta dobrada com cuidado lá dentro.",
+    text: "Branco ou colorido, no tamanho 11,4 x 16,2 cm, com a carta dobrada com cuidado lá dentro.",
   },
   {
-    title: "Lacre de cera",
-    text: "Aplicado à mão, com sinete de coração, na cor que você escolher.",
+    title: "Lacre de cera de presente",
+    text: "Aplicado à mão, com sinete de coração, na cor que você escolher. Vem em todas as cartas, sem custo extra.",
   },
 ];
 
