@@ -1,11 +1,21 @@
+import {
+  Button,
+  Chip,
+  Description,
+  Form,
+  Input,
+  Label,
+  Separator,
+  TextField,
+  buttonVariants,
+} from "@heroui/react";
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
+import { ArrowLeft, Check, Copy, MessageCircle } from "lucide-react";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { toast } from "sonner";
 
-import { formatDate, primaryButton, secondaryButton } from "@/components/painel/styles";
-import { Card, StatusBadge } from "@/components/painel/ui";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { formatDate } from "@/components/painel/styles";
+import { Section, StatusChip } from "@/components/painel/ui";
 import { ENVELOPE_COLORS, EXTRAS, SEAL_COLORS, formatBRL } from "@/lib/napkin";
 import {
   ORDER_STATUSES,
@@ -21,10 +31,10 @@ export const Route = createFileRoute("/painel/pedido/$id")({
     context.authenticated ? getOrder({ data: { id: params.id } }) : null,
   component: OrderDetail,
   errorComponent: () => (
-    <div className="mt-10 text-center">
-      <p className="text-muted-foreground">Não foi possível abrir este pedido.</p>
-      <Link to="/painel" className={`${secondaryButton} mt-4`}>
-        Voltar para a lista
+    <div className="py-16 text-center">
+      <p className="text-muted">Não foi possível abrir este pedido.</p>
+      <Link to="/painel/pedidos" className={`${buttonVariants({ variant: "secondary" })} mt-4`}>
+        Voltar para os pedidos
       </Link>
     </div>
   ),
@@ -50,6 +60,15 @@ function whatsappLink(phone: string, message?: string) {
 const trackingMessage = (buyerName: string, recipient: string, code: string) =>
   `Olá, ${buyerName}! A sua carta para ${recipient} foi postada nos Correios. ` +
   `Código de rastreio: ${code}. Acompanhe em https://rastreamento.correios.com.br/app/index.php`;
+
+function CopyButton({ text, label }: { text: string; label: string }) {
+  return (
+    <Button size="sm" variant="secondary" onPress={() => copy(text, label)}>
+      <Copy className="size-3.5" aria-hidden />
+      Copiar {label.toLowerCase()}
+    </Button>
+  );
+}
 
 function OrderDetail() {
   const data = Route.useLoaderData();
@@ -95,121 +114,116 @@ function OrderDetail() {
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
-        <Link to="/painel" className="text-sm text-muted-foreground underline underline-offset-4">
-          ← Todos os pedidos
+        <Link
+          to="/painel/pedidos"
+          className={buttonVariants({ variant: "ghost", size: "sm", className: "-ms-3" })}
+        >
+          <ArrowLeft className="size-4" aria-hidden />
+          Pedidos
         </Link>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl text-[var(--wine-deep)] md:text-3xl dark:text-foreground">
-            Carta para {order.recipient}
-          </h1>
-          <StatusBadge status={data.status} />
+        <div className="mt-2 flex flex-wrap items-center gap-3">
+          <h1 className="text-2xl font-semibold tracking-tight">Carta para {order.recipient}</h1>
+          <StatusChip status={data.status} />
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="mt-1 text-sm text-muted">
           {formatDate(data.createdAt)} · {formatBRL(data.amount / 100)}
         </p>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr] lg:items-start">
+      <div className="grid gap-5 lg:grid-cols-[1.25fr_0.75fr] lg:items-start">
         <div className="space-y-5">
-          <Card
-            title="Texto da carta"
-            action={
-              <button
-                type="button"
-                className={secondaryButton}
-                onClick={() => copy(order.text, "Texto")}
-              >
-                Copiar texto
-              </button>
-            }
-          >
-            <p className="rounded-2xl bg-[var(--paper)] p-4 leading-relaxed break-words whitespace-pre-wrap dark:bg-muted">
+          <Section title="Texto da carta" action={<CopyButton text={order.text} label="Texto" />}>
+            <p className="rounded-xl bg-surface-secondary p-4 leading-relaxed break-words whitespace-pre-wrap">
               {order.text}
             </p>
-            <p className="mt-2 text-xs text-muted-foreground">
+            <p className="mt-2 text-xs text-muted">
               {order.text.length.toLocaleString("pt-BR")} caracteres
               {order.anonymous && " · carta anônima"}
             </p>
-          </Card>
+          </Section>
 
-          <Card
-            title="Envelope"
-            action={
-              <button
-                type="button"
-                className={secondaryButton}
-                onClick={() => copy(address, "Endereço")}
-              >
-                Copiar endereço
-              </button>
-            }
-          >
+          <Section title="Envelope" action={<CopyButton text={address} label="Endereço" />}>
             <p className="leading-relaxed whitespace-pre-line">{address}</p>
-          </Card>
+          </Section>
         </div>
 
         <div className="space-y-5">
-          <Card title="Status">
-            <div className="flex flex-wrap gap-2">
-              {ORDER_STATUSES.map((status) => (
-                <button
-                  key={status.id}
-                  type="button"
-                  disabled={data.status === status.id || pendingStatus !== null}
-                  aria-pressed={data.status === status.id}
-                  onClick={() => changeStatus(status.id)}
-                  className={`rounded-full border px-4 py-2 text-sm transition-colors ${
-                    data.status === status.id
-                      ? "border-[var(--wine)] bg-[var(--wine)] text-[oklch(0.98_0.005_40)]"
-                      : "border-border hover:bg-accent disabled:opacity-40"
-                  }`}
-                >
-                  {pendingStatus === status.id ? "Salvando…" : status.label}
-                </button>
-              ))}
+          <Section title="Status">
+            <div className="flex flex-wrap gap-2" role="group" aria-label="Mudar status">
+              {ORDER_STATUSES.map((status) => {
+                const isCurrent = data.status === status.id;
+                return (
+                  <Button
+                    key={status.id}
+                    size="sm"
+                    variant={isCurrent ? "primary" : "secondary"}
+                    aria-pressed={isCurrent}
+                    isDisabled={
+                      isCurrent || (pendingStatus !== null && pendingStatus !== status.id)
+                    }
+                    isPending={pendingStatus === status.id}
+                    onPress={() => changeStatus(status.id)}
+                  >
+                    {status.label}
+                  </Button>
+                );
+              })}
             </div>
-          </Card>
+          </Section>
 
-          <Card title="Rastreio">
-            <form onSubmit={submitTracking} className="space-y-3">
-              <div>
-                <Label htmlFor="rastreio">Código dos Correios</Label>
-                <Input
-                  id="rastreio"
-                  value={tracking}
-                  onChange={(e) => setTracking(e.target.value.toUpperCase())}
-                  placeholder="AB123456789BR"
-                  autoCapitalize="characters"
-                  autoComplete="off"
-                  className="mt-2 rounded-xl"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={!tracking.trim() || savingTracking}
-                className={`${primaryButton} w-full`}
+          <Section title="Rastreio">
+            <Form onSubmit={submitTracking} className="flex flex-col gap-3">
+              <TextField
+                name="rastreio"
+                value={tracking}
+                onChange={(value) => setTracking(value.toUpperCase())}
+                fullWidth
               >
-                {savingTracking ? "Salvando…" : "Salvar rastreio"}
-              </button>
-              <p className="text-xs text-muted-foreground">
-                Ao salvar, o status muda para "Postada". Depois, avise a compradora pelo WhatsApp: a
-                mensagem já vai com o código.
-              </p>
-            </form>
-          </Card>
+                <Label>Código dos Correios</Label>
+                <Input placeholder="AB123456789BR" autoCapitalize="characters" autoComplete="off" />
+                <Description>Ao salvar, o status muda para "Postada".</Description>
+              </TextField>
+              <Button
+                type="submit"
+                fullWidth
+                isDisabled={!tracking.trim()}
+                isPending={savingTracking}
+              >
+                Salvar rastreio
+              </Button>
+            </Form>
+          </Section>
 
-          <Card title="Escolhas">
-            <dl className="space-y-1.5 text-sm">
+          <Section title="Escolhas">
+            <dl className="space-y-2 text-sm">
               <Row label="Envelope" value={labelOf(ENVELOPE_COLORS, order.envelope)} />
               <Row label="Lacre" value={labelOf(SEAL_COLORS, order.seal)} />
-              <Row label="Adicionais" value={extras.length ? extras.join(", ") : "Nenhum"} />
+              <div className="border-t border-separator pt-3">
+                <dt className="text-muted">Adicionais</dt>
+                <dd className="mt-2">
+                  {extras.length ? (
+                    <ul className="flex flex-wrap gap-1.5">
+                      {extras.map((extra) => (
+                        <li key={extra}>
+                          <Chip size="sm" variant="secondary">
+                            <Check className="size-3" aria-hidden />
+                            <Chip.Label>{extra}</Chip.Label>
+                          </Chip>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span className="text-muted">Nenhum</span>
+                  )}
+                </dd>
+              </div>
             </dl>
-          </Card>
+          </Section>
 
-          <Card title="Compradora">
-            <dl className="space-y-1.5 text-sm">
+          <Section title="Compradora">
+            <dl className="space-y-2 text-sm">
               <Row label="Nome" value={order.buyerName} />
               <Row
                 label="E-mail"
@@ -221,6 +235,7 @@ function OrderDetail() {
               />
               <Row label="WhatsApp" value={formatWhatsapp(order.whatsapp)} />
             </dl>
+            <Separator className="my-4" />
             <a
               href={whatsappLink(
                 order.whatsapp,
@@ -230,11 +245,12 @@ function OrderDetail() {
               )}
               target="_blank"
               rel="noreferrer"
-              className={`${primaryButton} mt-4 w-full`}
+              className={buttonVariants({ fullWidth: true })}
             >
+              <MessageCircle className="size-4" aria-hidden />
               {data.tracking ? "Enviar rastreio no WhatsApp" : "Abrir no WhatsApp"}
             </a>
-          </Card>
+          </Section>
         </div>
       </div>
     </div>
@@ -244,8 +260,8 @@ function OrderDetail() {
 function Row({ label, value }: { label: string; value: ReactNode }) {
   return (
     <div className="flex justify-between gap-4">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="text-right break-all">{value}</dd>
+      <dt className="text-muted">{label}</dt>
+      <dd className="text-right [overflow-wrap:anywhere]">{value}</dd>
     </div>
   );
 }

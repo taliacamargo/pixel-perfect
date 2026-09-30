@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PainelRouteRouteImport } from './routes/painel/route'
 import { Route as ApiCheckoutRouteImport } from './routes/api/checkout'
 import { Route as PainelIndexRouteImport } from './routes/painel/index'
+import { Route as PainelPedidosRouteImport } from './routes/painel/pedidos'
 import { Route as PedidoCanceladoRouteImport } from './routes/pedido/cancelado'
 import { Route as PedidoSucessoRouteImport } from './routes/pedido/sucesso'
 import { Route as PainelPedidoIdRouteImport } from './routes/painel/pedido.$id'
@@ -37,6 +38,11 @@ const PainelIndexRoute = PainelIndexRouteImport.update({
   path: '/',
   getParentRoute: () => PainelRouteRoute,
 } as any)
+const PainelPedidosRoute = PainelPedidosRouteImport.update({
+  id: '/pedidos',
+  path: '/pedidos',
+  getParentRoute: () => PainelRouteRoute,
+} as any)
 const PedidoCanceladoRoute = PedidoCanceladoRouteImport.update({
   id: '/pedido/cancelado',
   path: '/pedido/cancelado',
@@ -57,6 +63,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/painel': typeof PainelRouteRouteWithChildren
   '/api/checkout': typeof ApiCheckoutRoute
+  '/painel/pedidos': typeof PainelPedidosRoute
   '/pedido/cancelado': typeof PedidoCanceladoRoute
   '/pedido/sucesso': typeof PedidoSucessoRoute
   '/painel/': typeof PainelIndexRoute
@@ -65,6 +72,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/api/checkout': typeof ApiCheckoutRoute
+  '/painel/pedidos': typeof PainelPedidosRoute
   '/pedido/cancelado': typeof PedidoCanceladoRoute
   '/pedido/sucesso': typeof PedidoSucessoRoute
   '/painel': typeof PainelIndexRoute
@@ -75,6 +83,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/painel': typeof PainelRouteRouteWithChildren
   '/api/checkout': typeof ApiCheckoutRoute
+  '/painel/pedidos': typeof PainelPedidosRoute
   '/pedido/cancelado': typeof PedidoCanceladoRoute
   '/pedido/sucesso': typeof PedidoSucessoRoute
   '/painel/': typeof PainelIndexRoute
@@ -86,6 +95,7 @@ export interface FileRouteTypes {
     | '/'
     | '/painel'
     | '/api/checkout'
+    | '/painel/pedidos'
     | '/pedido/cancelado'
     | '/pedido/sucesso'
     | '/painel/'
@@ -94,6 +104,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/api/checkout'
+    | '/painel/pedidos'
     | '/pedido/cancelado'
     | '/pedido/sucesso'
     | '/painel'
@@ -103,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/painel'
     | '/api/checkout'
+    | '/painel/pedidos'
     | '/pedido/cancelado'
     | '/pedido/sucesso'
     | '/painel/'
@@ -147,6 +159,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PainelIndexRouteImport
       parentRoute: typeof PainelRouteRoute
     }
+    '/painel/pedidos': {
+      id: '/painel/pedidos'
+      path: '/pedidos'
+      fullPath: '/painel/pedidos'
+      preLoaderRoute: typeof PainelPedidosRouteImport
+      parentRoute: typeof PainelRouteRoute
+    }
     '/pedido/cancelado': {
       id: '/pedido/cancelado'
       path: '/pedido/cancelado'
@@ -172,11 +191,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface PainelRouteRouteChildren {
+  PainelPedidosRoute: typeof PainelPedidosRoute
   PainelIndexRoute: typeof PainelIndexRoute
   PainelPedidoIdRoute: typeof PainelPedidoIdRoute
 }
 
 const PainelRouteRouteChildren: PainelRouteRouteChildren = {
+  PainelPedidosRoute: PainelPedidosRoute,
   PainelIndexRoute: PainelIndexRoute,
   PainelPedidoIdRoute: PainelPedidoIdRoute,
 }

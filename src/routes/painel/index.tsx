@@ -1,83 +1,126 @@
+import { Card, buttonVariants } from "@heroui/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { z } from "zod";
+import { ArrowDownRight, ArrowUpRight, Mail, PenLine, Receipt, Wallet } from "lucide-react";
 
-import { formatDate } from "@/components/painel/styles";
-import { StatusBadge } from "@/components/painel/ui";
+import { OrderRows } from "@/components/painel/order-row";
+import { monthKey, monthName } from "@/components/painel/styles";
+import { PageHeader, PanelError, StatCard } from "@/components/painel/ui";
 import { formatBRL } from "@/lib/napkin";
-import { ORDER_STATUSES, orderStatusSchema } from "@/lib/order";
-import { listOrders } from "@/lib/painel.functions";
+import { listOrders, type AdminOrderSummary } from "@/lib/painel.functions";
 
 export const Route = createFileRoute("/painel/")({
-  validateSearch: z.object({ status: orderStatusSchema.optional().catch(undefined) }),
   loader: ({ context }) => (context.authenticated ? listOrders() : []),
-  component: OrderList,
+  component: Dashboard,
+  errorComponent: ({ reset }) => <PanelError reset={reset} />,
 });
 
-const FILTERS = [{ id: undefined, label: "Todos" }, ...ORDER_STATUSES];
+const sum = (orders: AdminOrderSummary[]) => orders.reduce((total, o) => total + o.amount, 0) / 100;
 
-function OrderList() {
+function previousMonthKey(key: string) {
+  const [year, month] = key.split("-").map(Number) as [number, number];
+  return month === 1 ? `${year - 1}-12` : `${year}-${String(month - 1).padStart(2, "0")}`;
+}
+
+function Delta({
+  current,
+  previous,
+  previousLabel,
+}: {
+  current: number;
+  previous: number;
+  previousLabel: string;
+}) {
+  if (previous === 0) return <>Sem vendas em {previousLabel} para comparar</>;
+  const change = Math.round(((current - previous) / previous) * 100);
+  const Icon = change >= 0 ? ArrowUpRight : ArrowDownRight;
+  return (
+    <span className="inline-flex items-center gap-1">
+      <Icon className="size-3.5" aria-hidden />
+      {change >= 0 ? "+" : ""}
+      {change}% em relação a {previousLabel}
+    </span>
+  );
+}
+
+function Dashboard() {
   const orders = Route.useLoaderData();
-  const { status } = Route.useSearch();
-  const visible = status ? orders.filter((order) => order.status === status) : orders;
+  const now = Date.now();
+  const thisMonth = monthKey(now);
+  const lastMonth = previousMonthKey(thisMonth);
+  const lastMonthLabel = monthName(new Date(`${lastMonth}-15T12:00:00Z`).getTime());
+
+  const monthOrders = orders.filter((o) => monthKey(o.createdAt) === thisMonth);
+  const lastMonthOrders = orders.filter((o) => monthKey(o.createdAt) === lastMonth);
+  const newOrders = orders.filter((o) => o.status === "novo");
+  const writing = orders.filter((o) => o.status === "escrevendo");
+  // Fila de produção: quem pagou primeiro vem primeiro.
+  const queue = [...newOrders, ...writing].sort((a, b) => a.createdAt - b.createdAt);
 
   return (
-    <div>
-      <h1 className="text-3xl text-[var(--wine-deep)] dark:text-foreground">Pedidos pagos</h1>
+    <div className="space-y-8">
+      <PageHeader
+        title="Visão geral"
+        description={`Resumo de ${monthName(now)} e cartas esperando por você.`}
+      />
 
-      <nav aria-label="Filtrar por status" className="mt-5 flex flex-wrap gap-2">
-        {FILTERS.map((filter) => {
-          const count = filter.id
-            ? orders.filter((order) => order.status === filter.id).length
-            : orders.length;
-          return (
-            <Link
-              key={filter.label}
-              to="/painel"
-              search={filter.id ? { status: filter.id } : {}}
-              aria-current={status === filter.id ? "page" : undefined}
-              className={`rounded-full border px-4 py-2 text-sm transition-colors ${
-                status === filter.id
-                  ? "border-[var(--wine)] bg-[var(--wine)] text-[oklch(0.98_0.005_40)]"
-                  : "border-border bg-card hover:bg-accent"
-              }`}
-            >
-              {filter.label} <span className="opacity-70">({count})</span>
-            </Link>
-          );
-        })}
-      </nav>
+      <section aria-label="Números do mês" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          icon={Wallet}
+          label={`Vendas em ${monthName(now)}`}
+          value={formatBRL(sum(monthOrders))}
+          detail={
+            <Delta
+              current={sum(monthOrders)}
+              previous={sum(lastMonthOrders)}
+              previousLabel={lastMonthLabel}
+            />
+          }
+        />
+        <StatCard
+          icon={Mail}
+          label={`Pedidos em ${monthName(now)}`}
+          value={String(monthOrders.length)}
+          detail={`${orders.length} pedidos pagos no total`}
+        />
+        <StatCard
+          icon={PenLine}
+          label="Na fila"
+          value={String(queue.length)}
+          detail={`${newOrders.length} novos · ${writing.length} escrevendo`}
+        />
+        <StatCard
+          icon={Receipt}
+          label="Ticket médio"
+          value={orders.length ? formatBRL(sum(orders) / orders.length) : "—"}
+          detail="Considerando todos os pedidos"
+        />
+      </section>
 
-      {visible.length === 0 ? (
-        <p className="mt-10 text-center text-muted-foreground">Nenhum pedido por aqui.</p>
-      ) : (
-        <ul className="mt-6 space-y-3">
-          {visible.map((order) => (
-            <li key={order.id}>
-              <Link
-                to="/painel/pedido/$id"
-                params={{ id: order.id }}
-                className="grid grid-cols-[1fr_auto] gap-x-4 gap-y-1 rounded-2xl bg-card p-4 transition-shadow hover:shadow-md md:grid-cols-[9rem_1fr_10rem_6rem_7rem] md:items-center md:px-6"
-              >
-                <span className="order-3 text-xs text-muted-foreground md:order-none md:text-sm">
-                  {formatDate(order.createdAt)}
-                </span>
-                <span className="order-1 truncate font-medium md:order-none">
-                  {order.recipient}
-                </span>
-                <span className="order-4 truncate text-right text-xs text-muted-foreground md:order-none md:text-left md:text-sm">
-                  {order.city}/{order.uf}
-                </span>
-                <span className="order-2 text-right font-light md:order-none">
-                  {formatBRL(order.amount / 100)}
-                </span>
-                <span className="order-5 col-span-2 md:order-none md:col-span-1 md:text-right">
-                  <StatusBadge status={order.status} />
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
+      <Card className="overflow-hidden p-0">
+        <Card.Header className="flex-row items-center justify-between gap-3 px-4 pt-4 md:px-5">
+          <div>
+            <Card.Title className="text-base">Precisam de você</Card.Title>
+            <Card.Description>
+              Pedidos novos e em escrita, do mais antigo para o mais novo.
+            </Card.Description>
+          </div>
+          <Link
+            to="/painel/pedidos"
+            className={buttonVariants({ variant: "tertiary", size: "sm" })}
+          >
+            Ver todos
+          </Link>
+        </Card.Header>
+        <Card.Content className="px-0 pb-1">
+          {queue.length === 0 ? (
+            <p className="px-5 py-10 text-center text-sm text-muted">
+              Tudo em dia! Nenhuma carta esperando.
+            </p>
+          ) : (
+            <OrderRows orders={queue.slice(0, 6)} />
+          )}
+        </Card.Content>
+      </Card>
     </div>
   );
 }
