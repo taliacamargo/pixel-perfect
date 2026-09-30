@@ -1,23 +1,26 @@
-import napkin from "@/assets/napkin-note.png";
+import letterEnvelopes from "@/assets/carta-envelopes.jpeg";
 
 export function Story() {
   return (
     <section className="mx-auto grid max-w-5xl items-center gap-10 px-6 py-20 md:grid-cols-2 md:py-28">
       <img
-        src={napkin}
-        alt="Guardanapo de papel com o bilhete manuscrito: eu ia te dizer isso pessoalmente, mas fiquei com vergonha :)"
-        width={1024}
-        height={768}
+        src={letterEnvelopes}
+        alt="Carta manuscrita com envelopes vinho, lacre dourado e sinetes sobre uma superfície cinza"
+        width={794}
+        height={794}
         loading="lazy"
         className="w-full rounded-2xl"
       />
       <div>
-        <h2 className="text-3xl md:text-4xl">Do guardanapo para o papel</h2>
+        <h2 className="text-3xl md:text-4xl">
+          O celular encurtou as distâncias. E as palavras também.
+        </h2>
         <p className="mt-5 leading-[1.9] text-muted-foreground">
-          Os sentimentos mais sinceros costumam nascer no improviso: um bilhete rabiscado às pressas
-          num guardanapo de bar, escrito antes que a coragem acabe. A Napkin Notes guarda esse
-          impulso e dá a ele o tempo que ele merece. Seu recado vira uma carta escrita à mão, em
-          papel encorpado, para ser lida e guardada para sempre.
+          Hoje a gente se fala o dia todo, mas quase nunca diz o que sente. Mensagens somem no meio
+          de tantas outras. Uma carta, não: ela fica pra sempre!
+        </p>
+        <p className="mt-4 leading-[1.9] text-muted-foreground">
+          Eu estou aqui para você surpreender quem ama como antigamente, sem sair de casa.
         </p>
       </div>
     </section>

@@ -8,16 +8,12 @@ export type ColorOption = { id: string; label: string; hex: string; price?: numb
 export const ENVELOPE_COLORS: ColorOption[] = [
   { id: "branco", label: "Branco", hex: "#FFFFFF" },
   { id: "vinho", label: "Vinho", hex: "#6B1E2E", price: ENVELOPE_COLOR_PRICE },
-  { id: "rose", label: "Rosé", hex: "#E3B7B4", price: ENVELOPE_COLOR_PRICE },
   { id: "creme", label: "Creme", hex: "#EFE3D0", price: ENVELOPE_COLOR_PRICE },
-  { id: "oliva", label: "Oliva", hex: "#7A8450", price: ENVELOPE_COLOR_PRICE },
 ];
 
 export const SEAL_COLORS: ColorOption[] = [
   { id: "perola", label: "Pérola", hex: "#D9D4DC" },
   { id: "dourado", label: "Dourado", hex: "#C9A227" },
-  { id: "vinho", label: "Vinho", hex: "#6B1E2E" },
-  { id: "rose-gold", label: "Rosé gold", hex: "#B76E79" },
 ];
 
 export type Extra = { id: string; label: string; description: string; price: number };
