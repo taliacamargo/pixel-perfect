@@ -581,7 +581,11 @@ export function Builder() {
                 </p>
               </div>
 
-              <EnvelopePreview envelope={envelopeColor} seal={sealColor} />
+              <EnvelopePreview
+                envelope={envelopeColor}
+                seal={sealColor}
+                sprig={extras.includes("raminho")}
+              />
             </div>
 
             <div className="rounded-3xl bg-card p-6 md:p-8">
