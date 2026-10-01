@@ -1,16 +1,24 @@
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
-import { deleteCookie, getCookie, getRequestIP, setCookie } from "@tanstack/react-start/server";
+import { deleteCookie, getCookie, setCookie } from "@tanstack/react-start/server";
 
 import { requireEnv } from "@/lib/checkout.server";
+import { LIMITS, clientIp, hit, reset, claimOnce } from "@/lib/rate-limit.server";
+import { verifyTotp } from "@/lib/totp.server";
 
 const COOKIE = "napkin_painel";
 const SESSION_SECONDS = 7 * 24 * 60 * 60;
 
 const sha256 = (value: string) => createHash("sha256").update(value).digest();
 
-// A chave da sessão deriva da senha: trocar ADMIN_PASSWORD desconecta todas as sessões.
+/** Segredo do segundo fator (app autenticador). Quando definido, o código é obrigatório. */
+const totpSecret = () => process.env["ADMIN_TOTP_SECRET"] || "";
+
+export const requiresCode = () => Boolean(totpSecret());
+
+// A chave da sessão deriva da senha e do segredo do 2FA: trocar qualquer um dos
+// dois desconecta todas as sessões abertas.
 const sign = (expiresAt: string) =>
-  createHmac("sha256", sha256(`napkin-painel:${requireEnv("ADMIN_PASSWORD")}`))
+  createHmac("sha256", sha256(`napkin-painel:${requireEnv("ADMIN_PASSWORD")}:${totpSecret()}`))
     .update(expiresAt)
     .digest("base64url");
 
@@ -28,44 +36,40 @@ export function requireAdmin(): void {
   if (!isAuthenticated()) throw new Error("Sessão expirada. Entre de novo.");
 }
 
-// Limite de tentativas. Sem banco de dados, os contadores ficam na memória do servidor:
-// seguram ataques em sequência, mas zeram quando a Vercel reinicia a função.
-const WINDOW_MS = 15 * 60 * 1000;
-const MAX_FAILURES_PER_IP = 5;
-const MAX_FAILURES_TOTAL = 20;
-const failures = new Map<string, { count: number; resetAt: number }>();
+const TOO_MANY = "Muitas tentativas. Espere 15 minutos e tente de novo.";
+const WRONG = "Senha ou código incorretos.";
 
-function failureCount(key: string, now: number): number {
-  const entry = failures.get(key);
-  if (!entry || entry.resetAt < now) return 0;
-  return entry.count;
-}
-
-function recordFailure(key: string, now: number): void {
-  const entry = failures.get(key);
-  if (!entry || entry.resetAt < now) failures.set(key, { count: 1, resetAt: now + WINDOW_MS });
-  else entry.count += 1;
-}
-
-export async function login(password: string): Promise<{ ok: boolean; error?: string }> {
-  const now = Date.now();
-  const ip = getRequestIP({ xForwardedFor: true }) ?? "desconhecido";
-  if (
-    failureCount(ip, now) >= MAX_FAILURES_PER_IP ||
-    failureCount("*", now) >= MAX_FAILURES_TOTAL
-  ) {
-    return { ok: false, error: "Muitas tentativas. Espere 15 minutos e tente de novo." };
+export async function login(
+  password: string,
+  code: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const ip = clientIp();
+  // Toda tentativa conta, certa ou errada; um login certo zera o contador do IP.
+  const [ipAllowed, globalAllowed] = await Promise.all([
+    hit(LIMITS.loginPerIp, ip),
+    hit(LIMITS.loginGlobal, "todos"),
+  ]);
+  if (!ipAllowed || !globalAllowed) {
+    console.warn(`[painel] login bloqueado por excesso de tentativas (ip ${ip})`);
+    return { ok: false, error: TOO_MANY };
   }
 
-  if (!safeEqual(password, requireEnv("ADMIN_PASSWORD"))) {
-    recordFailure(ip, now);
-    recordFailure("*", now);
+  const passwordOk = safeEqual(password, requireEnv("ADMIN_PASSWORD"));
+  const counter = requiresCode() ? verifyTotp(totpSecret(), code) : 0;
+  // Cada código só vale uma vez, mesmo dentro dos seus 30 segundos.
+  const codeOk =
+    counter !== null &&
+    (!requiresCode() || (passwordOk && (await claimOnce(`totp:${counter}`, 120))));
+
+  if (!passwordOk || !codeOk) {
+    console.warn(`[painel] login recusado (ip ${ip})`);
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    return { ok: false, error: "Senha incorreta." };
+    return { ok: false, error: WRONG };
   }
 
-  failures.delete(ip);
-  const expiresAt = String(now + SESSION_SECONDS * 1000);
+  await reset(LIMITS.loginPerIp, ip);
+  console.info(`[painel] login feito (ip ${ip})`);
+  const expiresAt = String(Date.now() + SESSION_SECONDS * 1000);
   setCookie(COOKIE, `${expiresAt}.${sign(expiresAt)}`, {
     httpOnly: true,
     secure: true,

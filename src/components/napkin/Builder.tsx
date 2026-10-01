@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState, type ComponentProps } from "react
 import { CircleAlert, CircleCheck, LoaderCircle, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { EnvelopePreview } from "@/components/napkin/EnvelopePreview";
+import { Turnstile, type TurnstileHandle } from "@/components/napkin/Turnstile";
+import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -141,6 +143,9 @@ export function Builder() {
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const turnstile = useRef<TurnstileHandle>(null);
+  const [turnstileToken, setTurnstileToken] = useState("");
+  const waitingTurnstile = Boolean(TURNSTILE_SITE_KEY) && !turnstileToken;
 
   // Os erros de "Seus dados" vêm do mesmo schema Zod que o servidor usa,
   // e só aparecem depois que a pessoa sai do campo.
@@ -194,6 +199,7 @@ export function Builder() {
           buyerName,
           email,
           whatsapp,
+          turnstileToken,
         }),
       });
       const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
@@ -204,6 +210,7 @@ export function Builder() {
         (error instanceof Error && error.message) ||
           "Não foi possível iniciar o pagamento. Tente novamente em instantes.",
       );
+      turnstile.current?.reset();
       setSubmitting(false);
     }
   };
@@ -613,18 +620,25 @@ export function Builder() {
                 </div>
               </dl>
 
+              <Turnstile ref={turnstile} onToken={setTurnstileToken} />
               <button
                 type="button"
-                disabled={!canSubmit || submitting}
+                disabled={!canSubmit || submitting || waitingTurnstile}
                 onClick={() => void goToCheckout()}
                 className="mt-6 w-full rounded-full bg-[var(--wine)] px-6 py-3.5 text-sm font-semibold text-[oklch(0.98_0.005_40)] transition-colors hover:bg-[var(--wine-deep)] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {submitting ? "Abrindo o pagamento…" : "Ir para o pagamento"}
               </button>
-              {!canSubmit && (
+              {!canSubmit ? (
                 <p className="mt-3 text-center text-xs text-muted-foreground">
                   Escreva pelo menos 20 caracteres e preencha o endereço e seus dados.
                 </p>
+              ) : (
+                waitingTurnstile && (
+                  <p className="mt-3 text-center text-xs text-muted-foreground">
+                    Fazendo uma verificação rápida de segurança…
+                  </p>
+                )
               )}
             </div>
           </aside>

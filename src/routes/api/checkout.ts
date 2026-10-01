@@ -2,12 +2,43 @@ import { createFileRoute } from "@tanstack/react-router";
 
 import { getStripe, orderToMetadata } from "@/lib/checkout.server";
 import { orderItems, orderSchema } from "@/lib/order";
+import { LIMITS, clientIp, hit } from "@/lib/rate-limit.server";
+import { verifyTurnstile } from "@/lib/turnstile.server";
 
 export const Route = createFileRoute("/api/checkout")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const parsed = orderSchema.safeParse(await request.json().catch(() => null));
+        // Barreiras contra robôs testando cartões: limite por IP e geral, e Turnstile.
+        const ip = clientIp();
+        const [ipAllowed, globalAllowed] = await Promise.all([
+          hit(LIMITS.checkoutPerIp, ip),
+          hit(LIMITS.checkoutGlobal, "todos"),
+        ]);
+        if (!ipAllowed || !globalAllowed) {
+          console.warn(`[checkout] bloqueado por excesso de tentativas (ip ${ip})`);
+          return Response.json(
+            { error: "Muitas tentativas seguidas. Espere alguns minutos e tente de novo." },
+            { status: 429 },
+          );
+        }
+
+        const body = (await request.json().catch(() => null)) as {
+          turnstileToken?: unknown;
+        } | null;
+        const token = typeof body?.turnstileToken === "string" ? body.turnstileToken : "";
+        if (!(await verifyTurnstile(token, ip))) {
+          console.warn(`[checkout] Turnstile recusado (ip ${ip})`);
+          return Response.json(
+            {
+              error:
+                "Não conseguimos confirmar que você não é um robô. Recarregue a página e tente de novo.",
+            },
+            { status: 403 },
+          );
+        }
+
+        const parsed = orderSchema.safeParse(body);
         if (!parsed.success) {
           return Response.json(
             { error: "Confira os dados do pedido e tente novamente." },
