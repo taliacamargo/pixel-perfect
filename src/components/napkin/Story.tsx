@@ -22,6 +22,9 @@ export function Story() {
         <p className="mt-4 leading-[1.9] text-muted-foreground">
           Eu estou aqui para você surpreender quem ama como antigamente, sem sair de casa.
         </p>
+        <p className="mt-4 leading-[1.9] text-muted-foreground">
+          Mande para um amor, amigos ou familiares :)
+        </p>
       </div>
     </section>
   );
