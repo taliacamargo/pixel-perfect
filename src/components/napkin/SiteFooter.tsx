@@ -1,7 +1,9 @@
+const TATA_INSTAGRAM = "https://www.instagram.com/tatacamarrgo/";
+
 const LINKS = [
-  { label: "WhatsApp", href: "https://wa.me/" },
-  { label: "Instagram", href: "https://instagram.com/tatacamarrgo" },
-  { label: "Pinterest", href: "https://br.pinterest.com/tatacamarrgo" },
+  { label: "WhatsApp", href: "https://wa.me/5551984553056" },
+  { label: "Instagram", href: TATA_INSTAGRAM },
+  { label: "Pinterest", href: "https://www.pinterest.com/NapkiNotes/" },
 ];
 
 export function SiteFooter() {
@@ -14,6 +16,17 @@ export function SiteFooter() {
           </p>
           <p className="mt-3 max-w-sm text-sm leading-relaxed opacity-75">
             Cartas de amor escritas à mão e enviadas pelo correio para todo o Brasil.
+          </p>
+          <p className="mt-4 text-sm opacity-75">
+            Idealizado por{" "}
+            <a
+              href={TATA_INSTAGRAM}
+              target="_blank"
+              rel="noreferrer"
+              className="underline underline-offset-4 transition-opacity hover:opacity-100"
+            >
+              Tata Camargo
+            </a>
           </p>
         </div>
         <nav className="flex gap-6 text-sm">

@@ -1,5 +1,5 @@
 import { Heart } from "lucide-react";
-import portrait from "@/assets/tata-retrato.jpg";
+import portrait from "@/assets/tata-torre-eiffel.jpg";
 import writing from "@/assets/tata-escrita.jpg";
 import memories from "@/assets/tata-memorias.jpg";
 
@@ -16,11 +16,11 @@ export function About() {
             />
             <img
               src={portrait}
-              alt="Tata de óculos, em um evento"
-              width={900}
-              height={1089}
+              alt="Tata sentada à beira do rio Sena, com a Torre Eiffel ao fundo"
+              width={475}
+              height={465}
               loading="lazy"
-              className="aspect-[3/4] w-full object-cover"
+              className="aspect-square w-full object-cover"
             />
           </figure>
 
@@ -63,17 +63,20 @@ export function About() {
           <p className="text-xs font-medium tracking-[0.2em] text-wine uppercase">Sobre mim</p>
           <h2 id="about-title" className="mt-4 text-3xl leading-tight md:text-4xl">
             Eu sou a Tata,
-            <br />a sua web escritora!
+            <br />a mão por trás da sua carta.
           </h2>
           <div className="mt-6 space-y-4 leading-[1.9] text-muted-foreground">
             <p>
-              Escrever é o que faço de melhor. E, junto dessa paixão pelas palavras, sempre amei
-              escrever cartas para os meus amigos e para quem mora no meu coração.
+              Meu pai revelava fotos dele com a minha mãe e escrevia dedicatórias no verso. Foi aí
+              que me apaixonei pela ideia de deixar o amor por escrito.
             </p>
             <p>
-              Foi assim que nasceu a Napkin Notes: juntei essas duas paixões para ajudar você a
-              transformar o que sente em uma carta e levar um pouquinho do seu amor para quem você
-              ama.
+              Imagina, daqui a alguns anos, alguém que você ama encontrando a sua carta. Relendo
+              suas palavras e sentindo, mais uma vez, o carinho que você deixou no papel.
+            </p>
+            <p>
+              O Napkin Notes nasceu para ser essa ponte. Espero que você se apaixone por escrever
+              para quem ama, assim como meu pai escrevia para a minha mãe. ♡
             </p>
           </div>
           <p className="mt-7 font-hand text-lg leading-loose text-wine">Com carinho, Tata</p>
