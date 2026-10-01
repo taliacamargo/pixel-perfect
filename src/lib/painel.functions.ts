@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import type Stripe from "stripe";
 import { z } from "zod";
 
-import { isAuthenticated, login, logout, requireAdmin } from "@/lib/admin.server";
+import { isAuthenticated, login, logout, requireAdmin, requiresCode } from "@/lib/admin.server";
 import { getStripe, metadataToOrder } from "@/lib/checkout.server";
 import { orderStatusSchema, type Order, type OrderStatusId } from "@/lib/order";
 
@@ -60,11 +60,17 @@ const sessionId = z.string().regex(/^cs_[A-Za-z0-9_]+$/);
 
 export const getAdminSession = createServerFn().handler(() => ({
   authenticated: isAuthenticated(),
+  requiresCode: requiresCode(),
 }));
 
 export const adminLogin = createServerFn({ method: "POST" })
-  .inputValidator(z.object({ password: z.string().min(1).max(200) }))
-  .handler(({ data }) => login(data.password));
+  .inputValidator(
+    z.object({
+      password: z.string().min(1).max(200),
+      code: z.string().max(10).default(""),
+    }),
+  )
+  .handler(({ data }) => login(data.password, data.code));
 
 export const adminLogout = createServerFn({ method: "POST" }).handler(() => logout());
 

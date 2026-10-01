@@ -23,6 +23,11 @@ Para publicar, envie as alterações ao repositório conectado à Vercel e execu
 
 - O botão "Ir para o pagamento" chama `POST /api/checkout` (`src/routes/api/checkout.ts`), que valida o pedido, recalcula o preço com a tabela de `src/lib/napkin.ts` e abre o Stripe Checkout em BRL. O pedido fica nos metadados da sessão da Stripe; não há banco de dados.
 - Painel em `/painel` (`src/routes/painel/`, `src/lib/painel.functions.ts`): login com `ADMIN_PASSWORD`, lista os pedidos pagos direto da Stripe (Pix confirmado depois aparece sozinho) e guarda status e rastreio nos metadados do PaymentIntent. O aviso de postagem vai pelo WhatsApp, com mensagem pronta.
+- Segurança:
+  - Login do painel com senha + código do app autenticador (`ADMIN_TOTP_SECRET`, gerado por `pnpm gerar-2fa`); cada código vale uma vez.
+  - Limite de tentativas no login e no `/api/checkout` (`src/lib/rate-limit.server.ts`), guardado no Upstash Redis quando configurado.
+  - Turnstile da Cloudflare antes do checkout, contra robôs testando cartões.
+  - Cabeçalhos de segurança em todas as respostas (`src/lib/security-headers.ts`); a CSP completa está em modo de observação (`Report-Only`).
 - Variáveis: veja `.env.example`. Localmente ficam em `.env.local` (fora do git); na Vercel, em Settings > Environment Variables.
 
 ## Identidade e SEO

@@ -2,8 +2,9 @@ import {
   AlertDialog,
   Button,
   Card,
-  FieldError,
+  Description,
   Form,
+  Input,
   InputGroup,
   Label,
   TextField,
@@ -50,10 +51,10 @@ function Brand() {
 
 function PainelLayout() {
   usePanelTheme();
-  const { authenticated } = Route.useRouteContext();
+  const { authenticated, requiresCode } = Route.useRouteContext();
   const [confirmLogout, setConfirmLogout] = useState(false);
 
-  if (!authenticated) return <LoginScreen />;
+  if (!authenticated) return <LoginScreen requiresCode={requiresCode} />;
 
   const askLogout = () => setConfirmLogout(true);
 
@@ -185,9 +186,10 @@ function LogoutDialog({
   );
 }
 
-function LoginScreen() {
+function LoginScreen({ requiresCode }: { requiresCode: boolean }) {
   const router = useRouter();
   const [password, setPassword] = useState("");
+  const [code, setCode] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
@@ -198,10 +200,14 @@ function LoginScreen() {
       setError("Digite a senha.");
       return;
     }
+    if (requiresCode && code.length !== 6) {
+      setError("Digite o código de 6 dígitos do app autenticador.");
+      return;
+    }
     setPending(true);
     setError("");
     try {
-      const result = await adminLogin({ data: { password } });
+      const result = await adminLogin({ data: { password, code } });
       if (result.ok) {
         await router.invalidate();
         return;
@@ -259,8 +265,36 @@ function LoginScreen() {
                     </Button>
                   </InputGroup.Suffix>
                 </InputGroup>
-                <FieldError>{error}</FieldError>
               </TextField>
+              {requiresCode && (
+                <TextField
+                  name="codigo"
+                  value={code}
+                  onChange={(value) => {
+                    setCode(value.replace(/\D/g, "").slice(0, 6));
+                    setError("");
+                  }}
+                  isInvalid={Boolean(error)}
+                  fullWidth
+                >
+                  <Label>Código do app autenticador</Label>
+                  <Input
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    placeholder="000000"
+                    maxLength={6}
+                    className="tracking-[0.3em] tabular-nums"
+                  />
+                  <Description>
+                    Abra o Google Authenticator (ou similar) e digite o código.
+                  </Description>
+                </TextField>
+              )}
+              {error && (
+                <p role="alert" className="text-sm text-danger">
+                  {error}
+                </p>
+              )}
               <Button type="submit" fullWidth isPending={pending}>
                 {pending ? "Entrando…" : "Entrar"}
               </Button>
