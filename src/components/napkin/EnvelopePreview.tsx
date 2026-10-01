@@ -1,7 +1,51 @@
 import { useId } from "react";
 import type { ColorOption } from "@/lib/napkin";
 
-export function EnvelopePreview({ envelope, seal }: { envelope: ColorOption; seal: ColorOption }) {
+// Hastes de capim-dos-pampas presas sob o lacre. Cada uma é desenhada ao longo do eixo x
+// e girada no lugar: a pluma é um contorno em forma de pena preenchido com degradê, e por
+// cima vão fiapos finos que escapam um pouco da borda para dar o aspecto felpudo.
+const n = (value: number) => value.toFixed(1);
+
+const SPRIG_STEMS = [
+  { angle: -58, length: 132, width: 19, seed: 3 },
+  { angle: -16, length: 148, width: 21, seed: 7 },
+  { angle: -37, length: 172, width: 25, seed: 11 },
+].map(({ angle, length, width, seed }) => {
+  const start = length * 0.34;
+  const span = length - start;
+  const outline =
+    `M${n(start)} 0` +
+    `C${n(start + span * 0.25)} ${n(-width * 1.05)} ${n(start + span * 0.75)} ${n(-width * 0.9)} ${n(length)} ${n(-2)}` +
+    `C${n(start + span * 0.75)} ${n(width * 0.75)} ${n(start + span * 0.25)} ${n(width * 0.95)} ${n(start)} 0Z`;
+
+  // Pseudoaleatório determinístico para os fiapos não mudarem entre renders (SSR e cliente).
+  let state = seed;
+  const random = () => {
+    state = (state * 9301 + 49297) % 233280;
+    return state / 233280;
+  };
+  let strands = "";
+  for (let x = start + 2; x < length - 4; x += 2.6) {
+    const progress = (x - start) / span;
+    const half = width * Math.sin(Math.PI * progress) ** 0.8;
+    for (const side of [-1, 1]) {
+      const reach = half * (0.75 + random() * 0.45);
+      const lean = reach * (0.55 + random() * 0.5);
+      strands += `M${n(x)} ${n(side * reach * 0.15)}Q${n(x + lean * 0.4)} ${n(side * reach * 0.7)} ${n(x + lean)} ${n(side * reach)}`;
+    }
+  }
+  return { angle, length, outline, strands };
+});
+
+export function EnvelopePreview({
+  envelope,
+  seal,
+  sprig = false,
+}: {
+  envelope: ColorOption;
+  seal: ColorOption;
+  sprig?: boolean;
+}) {
   const id = useId().replace(/:/g, "");
   const ref = (name: string) => `url(#${id}-${name})`;
 
@@ -25,6 +69,11 @@ export function EnvelopePreview({ envelope, seal }: { envelope: ColorOption; sea
               <stop offset="0.65" stopColor="white" stopOpacity="0" />
               <stop offset="1" stopColor="#362210" stopOpacity="0.5" />
             </radialGradient>
+            <linearGradient id={`${id}-plume`} x2="1">
+              <stop stopColor="#b8956a" />
+              <stop offset="0.55" stopColor="#d9bf96" />
+              <stop offset="1" stopColor="#ecdcbf" />
+            </linearGradient>
             <filter id={`${id}-shadow`} x="-20%" y="-30%" width="140%" height="170%">
               <feDropShadow
                 dx="0"
@@ -100,6 +149,42 @@ export function EnvelopePreview({ envelope, seal }: { envelope: ColorOption; sea
                 filter={ref("grain")}
               />
             </g>
+            {sprig && (
+              <g transform="translate(220 176)" filter={ref("crease")}>
+                {SPRIG_STEMS.map(({ angle, length, outline, strands }) => (
+                  <g key={angle} transform={`rotate(${angle})`}>
+                    <path
+                      d={`M-58 0H${n(length * 0.9)}`}
+                      stroke="#8a6a43"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d={outline}
+                      fill={ref("plume")}
+                      stroke="#9c7b52"
+                      strokeOpacity="0.55"
+                      strokeWidth="2"
+                    />
+                    <path
+                      d={strands}
+                      fill="none"
+                      stroke="#f6ecd9"
+                      strokeWidth="2.2"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d={strands}
+                      fill="none"
+                      stroke="#a7855a"
+                      strokeOpacity="0.45"
+                      strokeWidth="1"
+                      strokeLinecap="round"
+                    />
+                  </g>
+                ))}
+              </g>
+            )}
             <g transform="translate(220 176)" filter={ref("crease")}>
               <path
                 d="M-31-12Q-34-27-18-31Q-7-39 5-33Q21-36 29-23Q38-16 33-2Q39 12 27 23Q20 35 6 32Q-8 38-21 29Q-35 24-33 10Q-39-1-31-12Z"
@@ -131,7 +216,8 @@ export function EnvelopePreview({ envelope, seal }: { envelope: ColorOption; sea
         </svg>
       </div>
       <figcaption className="text-sm text-muted-foreground">
-        Envelope {envelope.label.toLowerCase()} com lacre {seal.label.toLowerCase()}.
+        Envelope {envelope.label.toLowerCase()} com lacre {seal.label.toLowerCase()}
+        {sprig && " e raminho seco"}.
       </figcaption>
     </figure>
   );
