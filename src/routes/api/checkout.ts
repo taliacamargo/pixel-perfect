@@ -49,12 +49,18 @@ export const Route = createFileRoute("/api/checkout")({
         const order = parsed.data;
 
         try {
+          // Saving a payment method requires a Customer attached to this session.
+          const customer = await getStripe().customers.create({
+            email: order.email,
+            name: order.buyerName,
+          });
           // Preview fields are not yet included in the installed Stripe SDK types.
           const params: Omit<Stripe.Checkout.SessionCreateParams, "ui_mode"> & {
             ui_mode: "form";
             integration_identifier: string;
           } = {
             mode: "payment",
+            customer: customer.id,
             ui_mode: "form",
             billing_address_collection: "required",
             submit_type: "auto",
