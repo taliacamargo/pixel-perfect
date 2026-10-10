@@ -561,7 +561,7 @@ export function Builder() {
                   onChange={(e) => setWhatsapp(formatWhatsapp(e.target.value))}
                   onBlur={() => touch("whatsapp")}
                   autoComplete="tel-national"
-                  placeholder="(11) 91234-5678"
+                  placeholder="(51) 98455-3056"
                 />
               </div>
               <label className="flex cursor-pointer items-center gap-3 text-sm">

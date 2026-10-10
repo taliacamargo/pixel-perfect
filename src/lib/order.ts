@@ -22,7 +22,7 @@ export function whatsappDigits(value: string): string {
   return digits.slice(0, 11);
 }
 
-/** Máscara progressiva: (11) 91234-5678. */
+/** Máscara progressiva: (51) 98455-3056. */
 export function formatWhatsapp(value: string): string {
   const d = whatsappDigits(value);
   if (d.length === 0) return "";
@@ -78,7 +78,7 @@ export const orderSchema = z.object({
     .refine((digits) => digits.length > 0, "Informe seu WhatsApp.")
     .refine(
       (digits) => digits.length === 0 || isValidWhatsapp(digits),
-      "Informe um celular válido com DDD, ex.: (11) 91234-5678.",
+      "Informe um celular válido com DDD, ex.: (51) 98455-3056.",
     ),
 });
 
