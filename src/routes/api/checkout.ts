@@ -53,6 +53,17 @@ export const Route = createFileRoute("/api/checkout")({
           const customer = await getStripe().customers.create({
             email: order.email,
             name: order.buyerName,
+            shipping: {
+              name: order.recipient,
+              address: {
+                country: "BR",
+                postal_code: order.cep,
+                state: order.uf,
+                city: order.city,
+                line1: `${order.street}, ${order.number}`,
+                line2: [order.complement, order.district].filter(Boolean).join(" — "),
+              },
+            },
           });
           // Preview fields are not yet included in the installed Stripe SDK types.
           const params: Omit<Stripe.Checkout.SessionCreateParams, "ui_mode"> & {
