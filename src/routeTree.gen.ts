@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as PainelRouteRouteImport } from './routes/painel/route'
 import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as ApiCheckoutRouteImport } from './routes/api/checkout'
+import { Route as ApiStripeWebhookRouteImport } from './routes/api/stripe-webhook'
 import { Route as PainelIndexRouteImport } from './routes/painel/index'
 import { Route as PainelPedidosRouteImport } from './routes/painel/pedidos'
 import { Route as PedidoCanceladoRouteImport } from './routes/pedido/cancelado'
@@ -37,6 +38,11 @@ const PrivacidadeRoute = PrivacidadeRouteImport.update({
 const ApiCheckoutRoute = ApiCheckoutRouteImport.update({
   id: '/api/checkout',
   path: '/api/checkout',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStripeWebhookRoute = ApiStripeWebhookRouteImport.update({
+  id: '/api/stripe-webhook',
+  path: '/api/stripe-webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PainelIndexRoute = PainelIndexRouteImport.update({
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/painel': typeof PainelRouteRouteWithChildren
   '/privacidade': typeof PrivacidadeRoute
   '/api/checkout': typeof ApiCheckoutRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/painel/pedidos': typeof PainelPedidosRoute
   '/pedido/cancelado': typeof PedidoCanceladoRoute
   '/pedido/sucesso': typeof PedidoSucessoRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/privacidade': typeof PrivacidadeRoute
   '/api/checkout': typeof ApiCheckoutRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/painel/pedidos': typeof PainelPedidosRoute
   '/pedido/cancelado': typeof PedidoCanceladoRoute
   '/pedido/sucesso': typeof PedidoSucessoRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/painel': typeof PainelRouteRouteWithChildren
   '/privacidade': typeof PrivacidadeRoute
   '/api/checkout': typeof ApiCheckoutRoute
+  '/api/stripe-webhook': typeof ApiStripeWebhookRoute
   '/painel/pedidos': typeof PainelPedidosRoute
   '/pedido/cancelado': typeof PedidoCanceladoRoute
   '/pedido/sucesso': typeof PedidoSucessoRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/privacidade'
     | '/api/checkout'
+    | '/api/stripe-webhook'
     | '/painel/pedidos'
     | '/pedido/cancelado'
     | '/pedido/sucesso'
@@ -115,6 +125,7 @@ export interface FileRouteTypes {
     | '/'
     | '/privacidade'
     | '/api/checkout'
+    | '/api/stripe-webhook'
     | '/painel/pedidos'
     | '/pedido/cancelado'
     | '/pedido/sucesso'
@@ -126,6 +137,7 @@ export interface FileRouteTypes {
     | '/painel'
     | '/privacidade'
     | '/api/checkout'
+    | '/api/stripe-webhook'
     | '/painel/pedidos'
     | '/pedido/cancelado'
     | '/pedido/sucesso'
@@ -138,6 +150,7 @@ export interface RootRouteChildren {
   PainelRouteRoute: typeof PainelRouteRouteWithChildren
   PrivacidadeRoute: typeof PrivacidadeRoute
   ApiCheckoutRoute: typeof ApiCheckoutRoute
+  ApiStripeWebhookRoute: typeof ApiStripeWebhookRoute
   PedidoCanceladoRoute: typeof PedidoCanceladoRoute
   PedidoSucessoRoute: typeof PedidoSucessoRoute
 }
@@ -170,6 +183,13 @@ declare module '@tanstack/react-router' {
       path: '/api/checkout'
       fullPath: '/api/checkout'
       preLoaderRoute: typeof ApiCheckoutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/stripe-webhook': {
+      id: '/api/stripe-webhook'
+      path: '/api/stripe-webhook'
+      fullPath: '/api/stripe-webhook'
+      preLoaderRoute: typeof ApiStripeWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/painel/': {
@@ -231,6 +251,7 @@ const rootRouteChildren: RootRouteChildren = {
   PainelRouteRoute: PainelRouteRouteWithChildren,
   PrivacidadeRoute: PrivacidadeRoute,
   ApiCheckoutRoute: ApiCheckoutRoute,
+  ApiStripeWebhookRoute: ApiStripeWebhookRoute,
   PedidoCanceladoRoute: PedidoCanceladoRoute,
   PedidoSucessoRoute: PedidoSucessoRoute,
 }

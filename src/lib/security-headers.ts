@@ -6,7 +6,8 @@ const BASE_HEADERS: Record<string, string> = {
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "strict-origin-when-cross-origin",
-  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), usb=(), payment=()",
+  "Permissions-Policy":
+    'camera=(), microphone=(), geolocation=(), usb=(), payment=(self "https://js.stripe.com" "https://checkout.stripe.com" "https://hooks.stripe.com")',
   "Cross-Origin-Opener-Policy": "same-origin",
   // Regras que não arriscam quebrar o site: ninguém abre o site dentro de outro
   // (clickjacking), nem troca a base dos links, nem carrega plugins.
@@ -19,12 +20,12 @@ const BASE_HEADERS: Record<string, string> = {
 // ela pode trocar de nome para "Content-Security-Policy" e passar a valer.
 const CSP_REPORT_ONLY = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.clarity.ms",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.clarity.ms https://js.stripe.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
   "img-src 'self' data: blob: https://*.clarity.ms https://c.bing.com",
-  "connect-src 'self' https://viacep.com.br https://challenges.cloudflare.com https://*.clarity.ms",
-  "frame-src https://challenges.cloudflare.com",
+  "connect-src 'self' https://viacep.com.br https://challenges.cloudflare.com https://*.clarity.ms https://*.stripe.com",
+  "frame-src https://challenges.cloudflare.com https://*.stripe.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",
   "object-src 'none'",
