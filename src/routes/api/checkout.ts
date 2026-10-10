@@ -49,54 +49,19 @@ export const Route = createFileRoute("/api/checkout")({
         const order = parsed.data;
 
         try {
-          // Saving a payment method requires a Customer attached to this session.
-          const customer = await getStripe().customers.create({
-            email: order.email,
-            name: order.buyerName,
-            shipping: {
-              name: order.recipient,
-              address: {
-                country: "BR",
-                postal_code: order.cep,
-                state: order.uf,
-                city: order.city,
-                line1: `${order.street}, ${order.number}`,
-                line2: [order.complement, order.district].filter(Boolean).join(" — "),
-              },
-            },
-          });
-          // Preview fields are not yet included in the installed Stripe SDK types.
-          const params: Omit<Stripe.Checkout.SessionCreateParams, "ui_mode"> & {
-            ui_mode: "form";
-            integration_identifier: string;
-          } = {
+          const origin = new URL(request.url).origin;
+          const params = {
             mode: "payment",
-            customer: customer.id,
-            ui_mode: "form",
-            billing_address_collection: "required",
+            ui_mode: "hosted_page",
+            billing_address_collection: "auto",
+            phone_number_collection: { enabled: false },
+            automatic_tax: { enabled: false },
+            allow_promotion_codes: false,
             submit_type: "auto",
-            shipping_address_collection: {
-              allowed_countries: [
-                "AR",
-                "BO",
-                "BR",
-                "BV",
-                "CL",
-                "CO",
-                "EC",
-                "FK",
-                "GF",
-                "GS",
-                "GY",
-                "PE",
-                "PY",
-                "SR",
-                "UY",
-                "VE",
-              ],
-            },
-            integration_identifier: "custom_embedded_web_0001",
-            saved_payment_method_options: { payment_method_save: "enabled" },
+            integration_identifier: "hosted_web_0001",
+            origin_context: "web",
+            success_url: origin + "/pedido/sucesso?session_id={CHECKOUT_SESSION_ID}",
+            cancel_url: origin + "/pedido/cancelado",
             // Sem payment_method_types: a Stripe mostra os métodos ativos no painel (cartão, Pix).
             line_items: orderItems(order).map((item) => ({
               quantity: 1,
@@ -111,10 +76,10 @@ export const Route = createFileRoute("/api/checkout")({
           const session = await getStripe().checkout.sessions.create(
             params as Stripe.Checkout.SessionCreateParams,
           );
-          if (!session.client_secret) {
+          if (!session.url) {
             throw new Error("A sessão da Stripe não retornou o segredo do formulário.");
           }
-          return Response.json({ client_secret: session.client_secret });
+          return Response.json({ url: session.url });
         } catch (error) {
           console.error(error);
           return Response.json(

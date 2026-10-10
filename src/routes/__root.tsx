@@ -112,7 +112,6 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <HeadContent />
-        <script src="https://js.stripe.com/dahlia/stripe.js" defer />
       </head>
       <body>
         {children}

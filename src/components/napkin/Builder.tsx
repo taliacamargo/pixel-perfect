@@ -3,7 +3,6 @@ import { CircleAlert, CircleCheck, LoaderCircle, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { EnvelopePreview } from "@/components/napkin/EnvelopePreview";
 import { Turnstile, type TurnstileHandle } from "@/components/napkin/Turnstile";
-import { StripeCheckoutForm } from "@/components/napkin/StripeCheckoutForm";
 import { TURNSTILE_SITE_KEY } from "@/lib/turnstile";
 
 import { Input } from "@/components/ui/input";
@@ -144,7 +143,6 @@ export function Builder() {
   const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const turnstile = useRef<TurnstileHandle>(null);
   const [turnstileToken, setTurnstileToken] = useState("");
   const waitingTurnstile = Boolean(TURNSTILE_SITE_KEY) && !turnstileToken;
@@ -181,9 +179,6 @@ export function Builder() {
   const goToCheckout = async () => {
     setSubmitting(true);
     try {
-      if (!import.meta.env["VITE_STRIPE_PUBLISHABLE_KEY"]) {
-        throw new Error("O pagamento está indisponível no momento.");
-      }
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -207,13 +202,9 @@ export function Builder() {
           turnstileToken,
         }),
       });
-      const data = (await res.json().catch(() => ({}))) as {
-        client_secret?: string;
-        error?: string;
-      };
-      if (!res.ok || !data.client_secret) throw new Error(data.error);
-      setClientSecret(data.client_secret);
-      setSubmitting(false);
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!res.ok || !data.url) throw new Error(data.error);
+      window.location.assign(data.url);
     } catch (error) {
       toast.error(
         (error instanceof Error && error.message) ||
@@ -301,23 +292,6 @@ export function Builder() {
       window.clearTimeout(timeout);
     }
   };
-
-  if (clientSecret) {
-    return (
-      <section id="montar" className="bg-[var(--blush)] py-20 md:py-28">
-        <div className="section-container">
-          <StripeCheckoutForm
-            clientSecret={clientSecret}
-            onBack={() => {
-              setClientSecret(null);
-              setTurnstileToken("");
-              setSubmitting(false);
-            }}
-          />
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section id="montar" className="bg-[var(--blush)] py-20 md:py-28">

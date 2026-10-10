@@ -21,7 +21,7 @@ Para publicar, envie as alterações ao repositório conectado à Vercel e execu
 
 ## Pagamentos
 
-O checkout usa o formulário incorporado da prévia `custom_checkout_payment_form_preview=v1`, com API `2026-09-30.endive` e `ui_mode: form`. O frontend recebe `client_secret` em JSON e monta o formulário da Stripe dentro do site. Configuração, testes e etapas restantes estão em [STRIPE_INTEGRATION_TODO.md](STRIPE_INTEGRATION_TODO.md).
+O checkout redireciona para a página hospedada da Stripe. A API devolve a URL em JSON; os preços e metadados do pedido são preservados. Configuração e etapas restantes: [STRIPE_INTEGRATION_TODO.md](STRIPE_INTEGRATION_TODO.md).
 
 - O botão "Ir para o pagamento" chama `POST /api/checkout` (`src/routes/api/checkout.ts`), que valida o pedido, recalcula o preço com a tabela de `src/lib/napkin.ts` e abre o Stripe Checkout em BRL. O pedido fica nos metadados da sessão da Stripe; não há banco de dados.
 - Painel em `/painel` (`src/routes/painel/`, `src/lib/painel.functions.ts`): login com `ADMIN_PASSWORD`, lista os pedidos pagos direto da Stripe (Pix confirmado depois aparece sozinho) e guarda status e rastreio nos metadados do PaymentIntent. O aviso de postagem vai pelo WhatsApp, com mensagem pronta.
