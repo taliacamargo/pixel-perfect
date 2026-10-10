@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 const TATA_INSTAGRAM = "https://www.instagram.com/tatacamarrgo/";
 
 const LINKS = [
@@ -27,6 +29,14 @@ export function SiteFooter() {
             >
               Tata Camargo
             </a>
+          </p>
+          <p className="mt-2 text-sm opacity-75">
+            <Link
+              to="/privacidade"
+              className="underline underline-offset-4 transition-opacity hover:opacity-100"
+            >
+              Política de privacidade
+            </Link>
           </p>
         </div>
         <nav className="flex gap-6 text-sm">

@@ -310,6 +310,7 @@ export function Builder() {
               <Label htmlFor="carta">O texto da sua carta</Label>
               <Textarea
                 id="carta"
+                data-clarity-mask="true"
                 value={text}
                 maxLength={MAX_CHARS}
                 onChange={(e) => setText(e.target.value)}
@@ -393,7 +394,8 @@ export function Builder() {
               </div>
             </div>
 
-            <div className="space-y-4">
+            {/* data-clarity-mask: nome e endereço nunca aparecem nas gravações do Clarity. */}
+            <div className="space-y-4" data-clarity-mask="true">
               <h3 className="text-lg">Para quem vai a carta</h3>
               <div>
                 <Label htmlFor="destinatario">Nome de quem vai receber</Label>
@@ -526,7 +528,7 @@ export function Builder() {
               </div>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4" data-clarity-mask="true">
               <h3 className="text-lg">Seus dados</h3>
               <div className="grid gap-4 sm:grid-cols-3">
                 <BuyerInput
@@ -575,7 +577,11 @@ export function Builder() {
           {/* Prévia */}
           <aside className="space-y-6 lg:sticky lg:top-8">
             <div className="rounded-3xl bg-card p-6 shadow-sm md:p-8">
-              <div className="ruled-paper min-h-72 rounded-2xl border border-border bg-[var(--paper)] p-6 dark:bg-card">
+              {/* A prévia repete o texto da carta, então também fica mascarada. */}
+              <div
+                data-clarity-mask="true"
+                className="ruled-paper min-h-72 rounded-2xl border border-border bg-[var(--paper)] p-6 dark:bg-card"
+              >
                 <p className="font-[family-name:var(--font-hand)] text-[0.78rem] leading-[2.1rem] break-words whitespace-pre-wrap text-foreground/85">
                   {text || "Sua carta aparece aqui, do jeitinho que você escrever."}
                 </p>

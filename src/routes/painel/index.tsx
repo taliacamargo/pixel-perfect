@@ -1,6 +1,6 @@
 import { Card, buttonVariants } from "@heroui/react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowDownRight, ArrowUpRight, Mail, PenLine, Receipt, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Flame, Mail, PenLine, Receipt, Wallet } from "lucide-react";
 
 import { OrderRows } from "@/components/painel/order-row";
 import { monthKey, monthName } from "@/components/painel/styles";
@@ -61,7 +61,17 @@ function Dashboard() {
       <PageHeader
         title="Visão geral"
         description={`Resumo de ${monthName(now)} e cartas esperando por você.`}
-      />
+      >
+        <a
+          href="https://clarity.microsoft.com"
+          target="_blank"
+          rel="noreferrer"
+          className={buttonVariants({ variant: "ghost", size: "sm" })}
+        >
+          <Flame className="size-4" aria-hidden />
+          Ver mapas de calor
+        </a>
+      </PageHeader>
 
       <section aria-label="Números do mês" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard

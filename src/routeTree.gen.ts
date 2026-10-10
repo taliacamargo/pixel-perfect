@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PainelRouteRouteImport } from './routes/painel/route'
+import { Route as PrivacidadeRouteImport } from './routes/privacidade'
 import { Route as ApiCheckoutRouteImport } from './routes/api/checkout'
 import { Route as PainelIndexRouteImport } from './routes/painel/index'
 import { Route as PainelPedidosRouteImport } from './routes/painel/pedidos'
@@ -26,6 +27,11 @@ const IndexRoute = IndexRouteImport.update({
 const PainelRouteRoute = PainelRouteRouteImport.update({
   id: '/painel',
   path: '/painel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacidadeRoute = PrivacidadeRouteImport.update({
+  id: '/privacidade',
+  path: '/privacidade',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiCheckoutRoute = ApiCheckoutRouteImport.update({
@@ -62,6 +68,7 @@ const PainelPedidoIdRoute = PainelPedidoIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/painel': typeof PainelRouteRouteWithChildren
+  '/privacidade': typeof PrivacidadeRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/painel/pedidos': typeof PainelPedidosRoute
   '/pedido/cancelado': typeof PedidoCanceladoRoute
@@ -71,6 +78,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/privacidade': typeof PrivacidadeRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/painel/pedidos': typeof PainelPedidosRoute
   '/pedido/cancelado': typeof PedidoCanceladoRoute
@@ -82,6 +90,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/painel': typeof PainelRouteRouteWithChildren
+  '/privacidade': typeof PrivacidadeRoute
   '/api/checkout': typeof ApiCheckoutRoute
   '/painel/pedidos': typeof PainelPedidosRoute
   '/pedido/cancelado': typeof PedidoCanceladoRoute
@@ -94,6 +103,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/painel'
+    | '/privacidade'
     | '/api/checkout'
     | '/painel/pedidos'
     | '/pedido/cancelado'
@@ -103,6 +113,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/privacidade'
     | '/api/checkout'
     | '/painel/pedidos'
     | '/pedido/cancelado'
@@ -113,6 +124,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/painel'
+    | '/privacidade'
     | '/api/checkout'
     | '/painel/pedidos'
     | '/pedido/cancelado'
@@ -124,6 +136,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   PainelRouteRoute: typeof PainelRouteRouteWithChildren
+  PrivacidadeRoute: typeof PrivacidadeRoute
   ApiCheckoutRoute: typeof ApiCheckoutRoute
   PedidoCanceladoRoute: typeof PedidoCanceladoRoute
   PedidoSucessoRoute: typeof PedidoSucessoRoute
@@ -143,6 +156,13 @@ declare module '@tanstack/react-router' {
       path: '/painel'
       fullPath: '/painel'
       preLoaderRoute: typeof PainelRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacidade': {
+      id: '/privacidade'
+      path: '/privacidade'
+      fullPath: '/privacidade'
+      preLoaderRoute: typeof PrivacidadeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/checkout': {
@@ -209,6 +229,7 @@ const PainelRouteRouteWithChildren = PainelRouteRoute._addFileChildren(
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   PainelRouteRoute: PainelRouteRouteWithChildren,
+  PrivacidadeRoute: PrivacidadeRoute,
   ApiCheckoutRoute: ApiCheckoutRoute,
   PedidoCanceladoRoute: PedidoCanceladoRoute,
   PedidoSucessoRoute: PedidoSucessoRoute,
