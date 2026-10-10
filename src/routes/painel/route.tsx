@@ -62,7 +62,8 @@ function PainelLayout() {
     "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-muted transition-colors hover:bg-default hover:text-foreground";
 
   return (
-    <div className="min-h-screen md:grid md:grid-cols-[15rem_1fr]">
+    // O Clarity não roda no painel; a máscara é só uma garantia extra para os pedidos.
+    <div data-clarity-mask="true" className="min-h-screen md:grid md:grid-cols-[15rem_1fr]">
       {/* Menu lateral (computador) */}
       <aside className="sticky top-0 hidden h-screen flex-col border-r border-separator bg-surface p-4 md:flex">
         <Brand />

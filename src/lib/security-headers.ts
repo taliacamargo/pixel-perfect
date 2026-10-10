@@ -19,11 +19,11 @@ const BASE_HEADERS: Record<string, string> = {
 // ela pode trocar de nome para "Content-Security-Policy" e passar a valer.
 const CSP_REPORT_ONLY = [
   "default-src 'self'",
-  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com",
+  "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://*.clarity.ms",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' data: blob:",
-  "connect-src 'self' https://viacep.com.br https://challenges.cloudflare.com",
+  "img-src 'self' data: blob: https://*.clarity.ms https://c.bing.com",
+  "connect-src 'self' https://viacep.com.br https://challenges.cloudflare.com https://*.clarity.ms",
   "frame-src https://challenges.cloudflare.com",
   "frame-ancestors 'none'",
   "base-uri 'self'",

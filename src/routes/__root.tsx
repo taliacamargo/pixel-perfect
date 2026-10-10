@@ -4,13 +4,15 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
-import { type ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { Toaster } from "../components/ui/sonner";
+import { isPainelPath, loadClarity, startClarity, stopClarity } from "../lib/clarity";
 
 function NotFoundComponent() {
   return (
@@ -121,6 +123,16 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
+
+  useEffect(() => {
+    if (isPainelPath(pathname)) {
+      stopClarity();
+    } else {
+      loadClarity(pathname);
+      startClarity();
+    }
+  }, [pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
