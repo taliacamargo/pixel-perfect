@@ -11,7 +11,10 @@ export function requireEnv(name: string): string {
 let stripe: Stripe | undefined;
 
 export function getStripe(): Stripe {
-  stripe ??= new Stripe(requireEnv("STRIPE_SECRET_KEY"));
+  stripe ??= new Stripe(requireEnv("STRIPE_SECRET_KEY"), {
+    // @ts-expect-error Stripe's SDK types do not include this preview API version.
+    apiVersion: "2026-09-30.endive; custom_checkout_payment_form_preview=v1",
+  });
   return stripe;
 }
 

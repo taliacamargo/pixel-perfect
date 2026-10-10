@@ -96,7 +96,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Homemade+Apple&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&family=Homemade+Apple&family=Be+Vietnam+Pro:wght@400;500;600&display=swap",
       },
     ],
   }),
@@ -112,6 +112,7 @@ function RootShell({ children }: { children: ReactNode }) {
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <script src="https://js.stripe.com/dahlia/stripe.js" defer />
       </head>
       <body>
         {children}

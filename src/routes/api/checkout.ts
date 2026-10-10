@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import type Stripe from "stripe";
 
 import { getStripe, orderToMetadata } from "@/lib/checkout.server";
 import { orderItems, orderSchema } from "@/lib/order";
@@ -46,13 +47,39 @@ export const Route = createFileRoute("/api/checkout")({
           );
         }
         const order = parsed.data;
-        const origin = new URL(request.url).origin;
 
         try {
-          const session = await getStripe().checkout.sessions.create({
+          // Preview fields are not yet included in the installed Stripe SDK types.
+          const params: Omit<Stripe.Checkout.SessionCreateParams, "ui_mode"> & {
+            ui_mode: "form";
+            integration_identifier: string;
+          } = {
             mode: "payment",
-            locale: "pt-BR",
-            customer_email: order.email,
+            ui_mode: "form",
+            billing_address_collection: "required",
+            submit_type: "auto",
+            shipping_address_collection: {
+              allowed_countries: [
+                "AR",
+                "BO",
+                "BR",
+                "BV",
+                "CL",
+                "CO",
+                "EC",
+                "FK",
+                "GF",
+                "GS",
+                "GY",
+                "PE",
+                "PY",
+                "SR",
+                "UY",
+                "VE",
+              ],
+            },
+            integration_identifier: "custom_embedded_web_0001",
+            saved_payment_method_options: { payment_method_save: "enabled" },
             // Sem payment_method_types: a Stripe mostra os métodos ativos no painel (cartão, Pix).
             line_items: orderItems(order).map((item) => ({
               quantity: 1,
@@ -63,10 +90,14 @@ export const Route = createFileRoute("/api/checkout")({
               },
             })),
             metadata: orderToMetadata(order),
-            success_url: `${origin}/pedido/sucesso`,
-            cancel_url: `${origin}/pedido/cancelado`,
-          });
-          return Response.json({ url: session.url });
+          };
+          const session = await getStripe().checkout.sessions.create(
+            params as Stripe.Checkout.SessionCreateParams,
+          );
+          if (!session.client_secret) {
+            throw new Error("A sessão da Stripe não retornou o segredo do formulário.");
+          }
+          return Response.json({ client_secret: session.client_secret });
         } catch (error) {
           console.error(error);
           return Response.json(
