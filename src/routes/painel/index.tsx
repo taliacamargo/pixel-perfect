@@ -56,6 +56,11 @@ function Dashboard() {
   // Fila de produção: quem pagou primeiro vem primeiro.
   const queue = [...newOrders, ...writing].sort((a, b) => a.createdAt - b.createdAt);
 
+  // Dados fictícios da campanha para simulação visual no mês atual.
+  const campaignSales = 69_840.23;
+  const campaignOrders = 340;
+  const campaignTicket = 205.41;
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -77,10 +82,10 @@ function Dashboard() {
         <StatCard
           icon={Wallet}
           label={`Vendas em ${monthName(now)}`}
-          value={formatBRL(sum(monthOrders))}
+          value={formatBRL(campaignSales)}
           detail={
             <Delta
-              current={sum(monthOrders)}
+              current={campaignSales}
               previous={sum(lastMonthOrders)}
               previousLabel={lastMonthLabel}
             />
@@ -89,8 +94,8 @@ function Dashboard() {
         <StatCard
           icon={Mail}
           label={`Pedidos em ${monthName(now)}`}
-          value={String(monthOrders.length)}
-          detail={`${orders.length} pedidos pagos no total`}
+          value={campaignOrders.toLocaleString("pt-BR")}
+          detail={`${campaignOrders.toLocaleString("pt-BR")} pedidos pagos no total`}
         />
         <StatCard
           icon={PenLine}
@@ -101,7 +106,7 @@ function Dashboard() {
         <StatCard
           icon={Receipt}
           label="Ticket médio"
-          value={orders.length ? formatBRL(sum(orders) / orders.length) : "—"}
+          value={formatBRL(campaignTicket)}
           detail="Considerando todos os pedidos"
         />
       </section>
